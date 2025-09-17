@@ -1,0 +1,35 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container">
+    <h2>Welcome, @ViewBag.EmployeeName</h2>
+    <p>Role: @ViewBag.Role</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Performance Reviews</h5>
+                </div>
+                <div class="card-body">
+                    <a href="@Url.Action("Index", "Performance")" class="btn btn-primary">View Reviews</a>
+                </div>
+            </div>
+        </div>
+
+        @if (ViewBag.Role == "Manager")
+        {
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Manager Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <a href="@Url.Action("Create", "Performance")" class="btn btn-success">Create Review</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

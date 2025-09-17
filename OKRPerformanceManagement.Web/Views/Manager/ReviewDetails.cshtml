@@ -1,0 +1,186 @@
+@model OKRPerformanceManagement.Models.PerformanceReview
+@{
+    ViewData["Title"] = "Review Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Performance Review Details</h1>
+                <div>
+                    <a href="@Url.Action("PendingReviews")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Pending Reviews
+                    </a>
+                    <a href="@Url.Action("Index")" class="btn btn-info">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mb-3">
+                                @Model.Employee.FirstName.Substring(0, 1)@Model.Employee.LastName.Substring(0, 1)
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <h4>@Model.Employee.FirstName @Model.Employee.LastName</h4>
+                            <p class="text-muted mb-1">@Model.Employee.Position</p>
+                            <p class="text-muted mb-1">@Model.Employee.Role</p>
+                            <p class="text-muted mb-1">@Model.Employee.Email</p>
+                            <p class="text-muted">Review Period: @Model.ReviewPeriodStart.ToString("MMM dd, yyyy") - @Model.ReviewPeriodEnd.ToString("MMM dd, yyyy")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Self Assessment -->
+    @if (!string.IsNullOrEmpty(Model.EmployeeSelfAssessment))
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Employee Self Assessment</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>@Model.EmployeeSelfAssessment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Objectives and Key Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Objectives and Key Results</h6>
+                </div>
+                <div class="card-body">
+                    @foreach (var objective in Model.Objectives.OrderBy(o => o.SortOrder))
+                    {
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold text-primary">@objective.Name</h5>
+                            <p class="text-muted">@objective.Description</p>
+                            <p><strong>Weight:</strong> @objective.Weight%</p>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Key Result</th>
+                                            <th>Target</th>
+                                            <th>Employee Rating</th>
+                                            <th>Employee Comments</th>
+                                            <th>Manager Rating</th>
+                                            <th>Manager Comments</th>
+                                            <th>Final Rating</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var keyResult in objective.KeyResults.OrderBy(kr => kr.SortOrder))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@keyResult.Name</strong><br>
+                                                    <small class="text-muted">@keyResult.Objectives</small>
+                                                </td>
+                                                <td>@keyResult.Target</td>
+                                                <td>
+                                                    @if (keyResult.EmployeeRating.HasValue)
+                                                    {
+                                                        <span class="badge badge-info">@keyResult.EmployeeRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not rated</span>
+                                                    }
+                                                </td>
+                                                <td>@keyResult.EmployeeComments</td>
+                                                <td>
+                                                    @if (keyResult.ManagerRating.HasValue)
+                                                    {
+                                                        <span class="badge badge-warning">@keyResult.ManagerRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not rated</span>
+                                                    }
+                                                </td>
+                                                <td>@keyResult.ManagerComments</td>
+                                                <td>
+                                                    @if (keyResult.FinalRating.HasValue)
+                                                    {
+                                                        <span class="badge badge-success">@keyResult.FinalRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not finalized</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manager Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Manager Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <a href="@Url.Action("ManagerReview", new { id = Model.Id })" class="btn btn-primary btn-block">
+                                <i class="fas fa-edit"></i> Add Manager Review
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="@Url.Action("ScheduleDiscussion", new { id = Model.Id })" class="btn btn-info btn-block">
+                                <i class="fas fa-calendar"></i> Schedule Discussion
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="@Url.Action("FinalizeReview", new { id = Model.Id })" class="btn btn-success btn-block">
+                                <i class="fas fa-check"></i> Finalize Review
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-lg {
+        width: 80px;
+        height: 80px;
+        font-size: 24px;
+    }
+</style>

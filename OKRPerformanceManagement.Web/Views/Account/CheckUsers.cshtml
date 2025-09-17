@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Check Users";
+}
+
+<div class="container">
+    <h2>Database Users Check</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Identity Users (@ViewBag.UserCount)</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Users != null && ViewBag.Users.Count > 0)
+                    {
+                        <ul class="list-group">
+                            @foreach (var user in ViewBag.Users)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@user.Email</strong><br/>
+                                    Name: @user.FirstName @user.LastName<br/>
+                                    ID: @user.Id
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-warning">No users found in database!</p>
+                    }
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Employees (@ViewBag.EmployeeCount)</h5>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Employees != null && ViewBag.Employees.Count > 0)
+                    {
+                        <ul class="list-group">
+                            @foreach (var employee in ViewBag.Employees)
+                            {
+                                <li class="list-group-item">
+                                    <strong>@employee.Email</strong><br/>
+                                    Name: @employee.FirstName @employee.LastName<br/>
+                                    Role: @employee.Role<br/>
+                                    Position: @employee.Position
+                                </li>
+                            }
+                        </ul>
+                    }
+                    else
+                    {
+                        <p class="text-warning">No employees found in database!</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-3">
+        <a href="@Url.Action("Login")" class="btn btn-primary">Back to Login</a>
+        <a href="@Url.Action("CreateTestUser")" class="btn btn-success">Create Test User</a>
+    </div>
+</div>

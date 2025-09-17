@@ -1,0 +1,426 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using OKRPerformanceManagement.Data;
+using OKRPerformanceManagement.Models;
+using System.Security.Claims;
+
+namespace OKRPerformanceManagement.Web.Controllers
+{
+    public class KeyResultUpdate
+    {
+        public int Id { get; set; }
+        public string? EmployeeComments { get; set; }
+        public int? EmployeeRating { get; set; }
+    }
+    [Authorize]
+    public class EmployeeController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public EmployeeController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .Include(e => e.RoleEntity)
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Employee record not found.");
+            }
+
+            // Get all performance reviews for this employee that were created by a manager
+            var myOKRs = await _context.PerformanceReviews
+                .Where(pr => pr.EmployeeId == currentEmployee.Id && pr.ManagerId != null)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.OKRTemplate)
+                .OrderByDescending(pr => pr.CreatedDate)
+                .ToListAsync();
+
+            // Get current OKR (most recent non-completed)
+            var currentOKR = myOKRs
+                .Where(pr => pr.Status != "Completed")
+                .OrderByDescending(pr => pr.CreatedDate)
+                .FirstOrDefault();
+
+            // Categorize OKRs by status
+            var inProgressOKRs = myOKRs.Where(pr => pr.Status == "Draft" || pr.Status == "Employee_Review").ToList();
+            var pendingReviewOKRs = myOKRs.Where(pr => pr.Status == "Manager_Review" || pr.Status == "Discussion").ToList();
+            var completedOKRs = myOKRs.Where(pr => pr.Status == "Completed" || pr.Status == "Signed").ToList();
+
+            ViewBag.Employee = currentEmployee;
+            ViewBag.MyOKRs = myOKRs;
+            ViewBag.CurrentOKR = currentOKR;
+            ViewBag.InProgressOKRs = inProgressOKRs;
+            ViewBag.PendingReviewOKRs = pendingReviewOKRs;
+            ViewBag.CompletedOKRs = completedOKRs;
+            ViewBag.UserRole = currentEmployee.Role;
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ReviewDetails(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.OKRTemplate)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            {
+                return NotFound();
+            }
+
+            return View(review);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SubmitSelfAssessment(int id, string employeeSelfAssessment, Dictionary<int, int> employeeRatings, Dictionary<int, string> employeeComments)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            {
+                return NotFound();
+            }
+
+            review.EmployeeSelfAssessment = employeeSelfAssessment;
+            review.Status = "Manager_Review";
+            review.SubmittedDate = DateTime.Now;
+
+            // Update employee ratings and comments for key results
+            foreach (var kvp in employeeRatings)
+            {
+                var keyResult = review.Objectives
+                    .SelectMany(o => o.KeyResults)
+                    .FirstOrDefault(kr => kr.Id == kvp.Key);
+
+                if (keyResult != null)
+                {
+                    keyResult.EmployeeRating = kvp.Value;
+                    keyResult.EmployeeRatedDate = DateTime.Now;
+                }
+            }
+
+            foreach (var kvp in employeeComments)
+            {
+                var keyResult = review.Objectives
+                    .SelectMany(o => o.KeyResults)
+                    .FirstOrDefault(kr => kr.Id == kvp.Key);
+
+                if (keyResult != null)
+                {
+                    keyResult.EmployeeComments = kvp.Value;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("ReviewDetails", new { id });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EmployeeSignOff(int id, string employeeSignature)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            {
+                return NotFound();
+            }
+
+            review.EmployeeSignature = employeeSignature;
+            review.EmployeeSignedDate = DateTime.Now;
+
+            // If both employee and manager have signed, mark as completed
+            if (!string.IsNullOrEmpty(review.ManagerSignature))
+            {
+                review.Status = "Completed";
+            }
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("ReviewDetails", new { id });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyPerformanceHistory()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Employee record not found.");
+            }
+
+            var completedReviews = await _context.PerformanceReviews
+                .Where(pr => pr.EmployeeId == currentEmployee.Id && pr.Status == "Completed")
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.OKRTemplate)
+                .OrderByDescending(pr => pr.FinalizedDate)
+                .ToListAsync();
+
+            ViewBag.CurrentEmployee = currentEmployee;
+            ViewBag.CompletedReviews = completedReviews;
+
+            return View();
+        }
+
+
+        [HttpGet]
+        public async Task<IActionResult> MyOKRs()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Employee record not found.");
+            }
+
+            var myOKRs = await _context.PerformanceReviews
+                .Where(pr => pr.EmployeeId == currentEmployee.Id)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.OKRTemplate)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .OrderByDescending(pr => pr.CreatedDate)
+                .ToListAsync();
+
+            ViewBag.Employee = currentEmployee;
+            ViewBag.MyOKRs = myOKRs;
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ViewOKR(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.OKRTemplate)
+                .Include(pr => pr.Comments)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            {
+                return NotFound();
+            }
+
+            ViewBag.Employee = currentEmployee;
+            ViewBag.OKR = review;
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> EditOKR(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.OKRTemplate)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            {
+                return NotFound();
+            }
+
+            // Only allow editing if status is Draft or Employee_Review
+            if (review.Status != "Draft" && review.Status != "Employee_Review")
+            {
+                return BadRequest("This OKR cannot be edited at this time.");
+            }
+
+            ViewBag.Employee = currentEmployee;
+            ViewBag.OKR = review;
+
+            return View(review);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditOKR(int id, string action, string EmployeeSelfAssessment, List<KeyResultUpdate> KeyResults)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            {
+                return NotFound();
+            }
+
+            // Only allow editing if status is Draft or Employee_Review
+            if (review.Status != "Draft" && review.Status != "Employee_Review")
+            {
+                return BadRequest("This OKR cannot be edited at this time.");
+            }
+
+            // Update self assessment
+            if (!string.IsNullOrEmpty(EmployeeSelfAssessment))
+            {
+                review.EmployeeSelfAssessment = EmployeeSelfAssessment;
+            }
+
+            // Update key results
+            if (KeyResults != null)
+            {
+                foreach (var keyResultUpdate in KeyResults)
+                {
+                    var keyResult = review.Objectives
+                        .SelectMany(o => o.KeyResults)
+                        .FirstOrDefault(kr => kr.Id == keyResultUpdate.Id);
+
+                    if (keyResult != null)
+                    {
+                        if (!string.IsNullOrEmpty(keyResultUpdate.EmployeeComments))
+                        {
+                            keyResult.EmployeeComments = keyResultUpdate.EmployeeComments;
+                        }
+                        
+                        if (keyResultUpdate.EmployeeRating.HasValue)
+                        {
+                            keyResult.EmployeeRating = keyResultUpdate.EmployeeRating;
+                            keyResult.EmployeeRatedDate = DateTime.Now;
+                        }
+                    }
+                }
+            }
+
+            // Handle different actions
+            if (action == "submit")
+            {
+                review.Status = "Manager_Review";
+                review.SubmittedDate = DateTime.Now;
+                TempData["SuccessMessage"] = "OKR submitted for manager review successfully!";
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "OKR saved successfully!";
+            }
+
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("ViewOKR", new { id = review.Id });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SelfAssessment()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Employee record not found.");
+            }
+
+            // Get pending reviews that need self-assessment
+            var pendingReviews = await _context.PerformanceReviews
+                .Where(pr => pr.EmployeeId == currentEmployee.Id && pr.Status == "Employee_Review")
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.OKRTemplate)
+                .ToListAsync();
+
+            ViewBag.Employee = currentEmployee;
+            ViewBag.PendingReviews = pendingReviews;
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Profile()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .Include(e => e.RoleEntity)
+                .Include(e => e.Manager)
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Employee record not found.");
+            }
+
+            ViewBag.Employee = currentEmployee;
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadPDF(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.OKRTemplate)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            {
+                return NotFound();
+            }
+
+            // TODO: Implement PDF generation
+            // For now, return a view that can be printed as PDF
+            return View("PerformanceReviewPDF", review);
+        }
+    }
+}

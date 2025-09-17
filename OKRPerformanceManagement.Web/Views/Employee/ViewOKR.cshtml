@@ -1,0 +1,350 @@
+@model OKRPerformanceManagement.Models.PerformanceReview
+
+@{
+    ViewData["Title"] = "View OKR";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">OKR Details</h1>
+                <div>
+                    @if (Model != null)
+                    {
+                        @if (Model.Status == "Draft" || Model.Status == "Employee_Review")
+                        {
+                            <a href="@Url.Action("EditOKR", new { id = Model.Id })" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Edit OKR
+                            </a>
+                        }
+                        @if (Model.Status == "Manager_Review" || Model.Status == "Discussion")
+                        {
+                            <a href="@Url.Action("SelfAssessment", new { id = Model.Id })" class="btn btn-warning">
+                                <i class="fas fa-user-edit"></i> Self Assessment
+                            </a>
+                        }
+                        @if (Model.Status == "Completed" || Model.Status == "Signed")
+                        {
+                            <a href="@Url.Action("DownloadPDF", new { id = Model.Id })" class="btn btn-success">
+                                <i class="fas fa-download"></i> Download PDF
+                            </a>
+                        }
+                    }
+                    <a href="@Url.Action("MyOKRs")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to My OKRs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OKR Header Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">OKR Information</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model != null)
+                    {
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>OKR Review #@Model.Id</h5>
+                                <p class="text-muted">Performance Review for @(Model.Employee?.FirstName ?? "Unknown") @(Model.Employee?.LastName ?? "Employee")</p>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <strong>Status:</strong>
+                                        @switch (Model.Status)
+                                        {
+                                            case "Draft":
+                                                <span class="badge badge-secondary">Draft</span>
+                                                break;
+                                            case "Employee_Review":
+                                                <span class="badge badge-warning">Employee Review</span>
+                                                break;
+                                            case "Manager_Review":
+                                                <span class="badge badge-info">Manager Review</span>
+                                                break;
+                                            case "Discussion":
+                                                <span class="badge badge-primary">Discussion</span>
+                                                break;
+                                            case "Completed":
+                                                <span class="badge badge-success">Completed</span>
+                                                break;
+                                            case "Signed":
+                                                <span class="badge badge-success">Signed</span>
+                                                break;
+                                            default:
+                                                <span class="badge badge-secondary">@(Model.Status ?? "Unknown")</span>
+                                                break;
+                                        }
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Overall Rating:</strong>
+                                        @if (Model.OverallRating.HasValue)
+                                        {
+                                            <span class="badge badge-success">@Model.OverallRating.Value.ToString("F1")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Not Rated</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-6">
+                                        <strong>Period:</strong>
+                                        <span>@(Model.ReviewPeriodStart.ToString("MMM dd") ?? "N/A") - @(Model.ReviewPeriodEnd.ToString("MMM dd, yyyy") ?? "N/A")</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <strong>Created:</strong>
+                                        <span>@Model.CreatedDate.ToString("MMM dd, yyyy")</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning mb-3"></i>
+                            <h5 class="text-gray-600">OKR Not Found</h5>
+                            <p class="text-muted">The requested OKR could not be found or loaded.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Objectives and Key Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Objectives and Key Results</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model != null && Model.Objectives != null && Model.Objectives.Any())
+                    {
+                        @foreach (var objective in Model.Objectives)
+                        {
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-0">@objective.Name</h6>
+                                            @if (!string.IsNullOrEmpty(objective.Description))
+                                            {
+                                                <small class="text-muted">@objective.Description</small>
+                                            }
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <span class="badge badge-primary">Weight: @objective.Weight%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    @if (objective.KeyResults != null && objective.KeyResults.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Key Result</th>
+                                                        <th>Target</th>
+                                                        <th>Employee Rating</th>
+                                                        <th>Manager Rating</th>
+                                                        <th>Final Rating</th>
+                                                        <th>Comments</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var kr in objective.KeyResults)
+                                                    {
+                                                        <tr>
+                                                            <td>
+                                                                <strong>@kr.Name</strong>
+                                                                @if (!string.IsNullOrEmpty(kr.Objectives))
+                                                                {
+                                                                    <br>
+                                                                    <small class="text-muted">@kr.Objectives</small>
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @if (!string.IsNullOrEmpty(kr.Target))
+                                                                {
+                                                                    <span>@kr.Target</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">Not set</span>
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @if (kr.EmployeeRating.HasValue)
+                                                                {
+                                                                    <span class="badge badge-info">@kr.EmployeeRating.Value</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">Not rated</span>
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @if (kr.ManagerRating.HasValue)
+                                                                {
+                                                                    <span class="badge badge-warning">@kr.ManagerRating.Value</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">Not rated</span>
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @if (kr.FinalRating.HasValue)
+                                                                {
+                                                                    <span class="badge badge-success">@kr.FinalRating.Value</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">Not finalized</span>
+                                                                }
+                                                            </td>
+                                                            <td>
+                                                                @if (!string.IsNullOrEmpty(kr.EmployeeComments))
+                                                                {
+                                                                    <small class="text-info">Employee: @kr.EmployeeComments</small>
+                                                                }
+                                                                @if (!string.IsNullOrEmpty(kr.ManagerComments))
+                                                                {
+                                                                    <br>
+                                                                    <small class="text-warning">Manager: @kr.ManagerComments</small>
+                                                                }
+                                                                @if (string.IsNullOrEmpty(kr.EmployeeComments) && string.IsNullOrEmpty(kr.ManagerComments))
+                                                                {
+                                                                    <span class="text-muted">No comments</span>
+                                                                }
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-muted">No key results defined for this objective.</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-circle fa-2x text-gray-300 mb-3"></i>
+                            <h5 class="text-gray-600">No Objectives Found</h5>
+                            <p class="text-muted">This OKR doesn't have any objectives defined yet.</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Self Assessment Section -->
+    @if (Model != null && !string.IsNullOrEmpty(Model.EmployeeSelfAssessment))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Employee Self Assessment</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>@Model.EmployeeSelfAssessment</p>
+                        @if (Model.SubmittedDate.HasValue)
+                        {
+                            <small class="text-muted">Submitted on: @Model.SubmittedDate.Value.ToString("MMM dd, yyyy")</small>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Manager Comments Section -->
+    @if (Model != null && !string.IsNullOrEmpty(Model.ManagerAssessment))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Manager Assessment</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>@Model.ManagerAssessment</p>
+                        @if (Model.ManagerReviewedDate.HasValue)
+                        {
+                            <small class="text-muted">Reviewed on: @Model.ManagerReviewedDate.Value.ToString("MMM dd, yyyy")</small>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Signatures Section -->
+    @if (Model != null && (Model.Status == "Completed" || Model.Status == "Signed"))
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Signatures</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Employee Signature</h6>
+                                @if (!string.IsNullOrEmpty(Model.EmployeeSignature))
+                                {
+                                    <p class="border p-3 bg-light">@Model.EmployeeSignature</p>
+                                    @if (Model.EmployeeSignedDate.HasValue)
+                                    {
+                                        <small class="text-muted">Signed on: @Model.EmployeeSignedDate.Value.ToString("MMM dd, yyyy")</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted">Not signed</p>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Manager Signature</h6>
+                                @if (!string.IsNullOrEmpty(Model.ManagerSignature))
+                                {
+                                    <p class="border p-3 bg-light">@Model.ManagerSignature</p>
+                                    @if (Model.ManagerSignedDate.HasValue)
+                                    {
+                                        <small class="text-muted">Signed on: @Model.ManagerSignedDate.Value.ToString("MMM dd, yyyy")</small>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted">Not signed</p>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>

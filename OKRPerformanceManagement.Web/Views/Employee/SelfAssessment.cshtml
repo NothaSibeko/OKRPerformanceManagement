@@ -1,0 +1,196 @@
+@{
+    ViewData["Title"] = "Self Assessment";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Self Assessment</h1>
+                <div>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.PendingReviews != null && ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.PendingReviews).Any())
+    {
+        @foreach (var review in ViewBag.PendingReviews)
+        {
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card shadow">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">OKR Review #@review.Id</h6>
+                        </div>
+                        <div class="card-body">
+                            <form asp-action="SubmitSelfAssessment" method="post">
+                                <input type="hidden" name="id" value="@review.Id" />
+                                
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Review Period</label>
+                                        <p class="form-control-plaintext">
+                                            <span>@review.ReviewPeriodStart.ToString("MMM dd") - @review.ReviewPeriodEnd.ToString("MMM dd, yyyy")</span>
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Status</label>
+                                        <p class="form-control-plaintext">
+                                            <span class="badge badge-warning">@review.Status</span>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <label class="form-label">Self Assessment</label>
+                                        <textarea name="employeeSelfAssessment" class="form-control" rows="5" placeholder="Please provide your self-assessment for this review period. Include your achievements, challenges faced, and areas for improvement..." required></textarea>
+                                    </div>
+                                </div>
+
+                                @if (review.Objectives != null && review.Objectives.Any())
+                                {
+                                    <div class="row mb-4">
+                                        <div class="col-12">
+                                            <h5>Rate Your Performance on Key Results</h5>
+                                            <p class="text-muted">Please rate your performance on each key result using the 1-5 scale provided.</p>
+                                            
+                                            @foreach (var objective in review.Objectives)
+                                            {
+                                                <div class="card mb-3">
+                                                    <div class="card-header">
+                                                        <h6 class="mb-0">@objective.Name</h6>
+                                                        @if (!string.IsNullOrEmpty(objective.Description))
+                                                        {
+                                                            <small class="text-muted">@objective.Description</small>
+                                                        }
+                                                    </div>
+                                                    <div class="card-body">
+                                                        @if (objective.KeyResults != null && objective.KeyResults.Any())
+                                                        {
+                                                            @foreach (var kr in objective.KeyResults)
+                                                            {
+                                                                <div class="row mb-3">
+                                                                    <div class="col-md-6">
+                                                                        <h6>@kr.Name</h6>
+                                                                        @if (!string.IsNullOrEmpty(kr.Target))
+                                                                        {
+                                                                            <p class="text-muted">Target: @kr.Target</p>
+                                                                        }
+                                                                        @if (!string.IsNullOrEmpty(kr.Measure))
+                                                                        {
+                                                                            <div class="alert alert-info">
+                                                                                <strong>Rating Scale:</strong>
+                                                                                <small>@kr.Measure</small>
+                                                                            </div>
+                                                                        }
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label">Your Rating (1-5)</label>
+                                                                        <select name="employeeRatings[@kr.Id]" class="form-control" required>
+                                                                            <option value="">Select Rating</option>
+                                                                            <option value="1">1 - @(kr.Rating1Description ?? "Poor")</option>
+                                                                            <option value="2">2 - @(kr.Rating2Description ?? "Below Average")</option>
+                                                                            <option value="3">3 - @(kr.Rating3Description ?? "Average")</option>
+                                                                            <option value="4">4 - @(kr.Rating4Description ?? "Good")</option>
+                                                                            <option value="5">5 - @(kr.Rating5Description ?? "Excellent")</option>
+                                                                        </select>
+                                                                    </div>
+                                                                    <div class="col-md-3">
+                                                                        <label class="form-label">Your Comments</label>
+                                                                        <textarea name="employeeComments[@kr.Id]" class="form-control" rows="3" placeholder="Provide specific examples and evidence for your rating..."></textarea>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <strong>Important:</strong> Once you submit your self-assessment, you will not be able to edit it. 
+                                            Please review all your ratings and comments carefully before submitting.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-check"></i> Submit Self Assessment
+                                        </button>
+                                        <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow mb-4">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-clipboard-check fa-3x text-gray-300 mb-3"></i>
+                        <h5 class="text-gray-600">No Pending Self Assessments</h5>
+                        <p class="text-muted">You don't have any OKRs that require self-assessment at this time.</p>
+                        <a href="@Url.Action("Index")" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add form validation
+            $('form').on('submit', function(e) {
+                var isValid = true;
+                
+                // Check if all required ratings are selected
+                $('select[name^="employeeRatings"]').each(function() {
+                    if (!$(this).val()) {
+                        isValid = false;
+                        $(this).addClass('is-invalid');
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+                
+                // Check if self assessment is provided
+                if (!$('textarea[name="employeeSelfAssessment"]').val().trim()) {
+                    isValid = false;
+                    $('textarea[name="employeeSelfAssessment"]').addClass('is-invalid');
+                } else {
+                    $('textarea[name="employeeSelfAssessment"]').removeClass('is-invalid');
+                }
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    alert('Please complete all required fields before submitting your self-assessment.');
+                }
+            });
+        });
+    </script>
+}

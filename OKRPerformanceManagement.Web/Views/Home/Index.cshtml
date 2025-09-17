@@ -1,0 +1,118 @@
+@{
+    ViewData["Title"] = "Home Page";
+    var employee = ViewBag.Employee as OKRPerformanceManagement.Models.Employee;
+    var userRole = ViewBag.UserRole as string;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome to OKR Performance Management</h1>
+    <p class="lead">Track and manage employee performance with Objectives and Key Results (OKRs)</p>
+    
+    @if (employee != null)
+    {
+        <div class="alert alert-info mt-3">
+            <h4>Welcome, @employee.FirstName @employee.LastName!</h4>
+            <p><strong>Role:</strong> @employee.Role | <strong>Position:</strong> @employee.Position</p>
+            <p><strong>Line of Business:</strong> @employee.LineOfBusiness | <strong>Financial Year:</strong> @employee.FinancialYear</p>
+        </div>
+    }
+</div>
+
+@if (userRole == "Manager" || userRole == "Admin")
+{
+    <div class="row mt-5">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Employees</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.EmployeeCount</h4>
+                    <p class="card-text">Total employees in the system</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Performance Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.ReviewCount</h4>
+                    <p class="card-text">Active performance reviews</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Objectives</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.ObjectiveCount</h4>
+                    <p class="card-text">Total objectives set</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Key Results</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.KeyResultCount</h4>
+                    <p class="card-text">Key results tracked</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @if (userRole == "Manager")
+                    {
+                        <div class="col-md-3">
+                            <a href="@Url.Action("Index", "Manager")" class="btn btn-primary btn-lg btn-block mb-2">Manager Dashboard</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("CreateReview", "Manager")" class="btn btn-success btn-lg btn-block mb-2">Create New Review</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("PendingReviews", "Manager")" class="btn btn-info btn-lg btn-block mb-2">Pending Reviews</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("CreateEmployee", "Manager")" class="btn btn-warning btn-lg btn-block mb-2">Create Employee</a>
+                        </div>
+                    }
+                    else if (userRole == "Admin")
+                    {
+                        <div class="col-md-3">
+                            <a href="@Url.Action("Index", "Admin")" class="btn btn-primary btn-lg btn-block mb-2">Admin Dashboard</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("CreateEmployee", "Admin")" class="btn btn-success btn-lg btn-block mb-2">Create Employee</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("ManageRoles", "Admin")" class="btn btn-info btn-lg btn-block mb-2">Manage Roles</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("Index", "Employee")" class="btn btn-warning btn-lg btn-block mb-2">My Reviews</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-md-4">
+                            <a href="@Url.Action("Index", "Employee")" class="btn btn-primary btn-lg btn-block mb-2">My Performance Reviews</a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="@Url.Action("SelfAssessment", "Employee")" class="btn btn-success btn-lg btn-block mb-2">Complete Self Assessment</a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="@Url.Action("MyPerformanceHistory", "Employee")" class="btn btn-info btn-lg btn-block mb-2">Review History</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,279 @@
+@{
+    ViewData["Title"] = "Manager Dashboard";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Manager Dashboard</h1>
+                <div>
+                    <a href="@Url.Action("CreateEmployee")" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Create Employee
+                    </a>
+                    <a href="@Url.Action("CreateReview")" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Create Review
+                    </a>
+                    <a href="@Url.Action("PendingReviews")" class="btn btn-warning">
+                        <i class="fas fa-clipboard-check"></i> Pending Reviews
+                    </a>
+                    <a href="@Url.Action("PendingReviews")" class="btn btn-info">
+                        <i class="fas fa-eye"></i> My Reviews
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                My Team Members
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TeamMembers.Count</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Reviews
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.PendingReviews.Count</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Completed Reviews
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.CompletedReviews.Count</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                This Quarter
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">Q@((DateTime.Now.Month - 1) / 3 + 1)</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Members Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">My Team Members</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="teamMembersTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Position</th>
+                                    <th>Role</th>
+                                    <th>Current OKR Status</th>
+                                    <th>Last Review</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var member in ViewBag.TeamMembers)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                    @member.FirstName.Substring(0, 1)@member.LastName.Substring(0, 1)
+                                                </div>
+                                                <div>
+                                                    <div class="font-weight-bold">@member.FirstName @member.LastName</div>
+                                                    <div class="text-muted small">@member.Email</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>@member.Position</td>
+                                        <td>
+                                            <span class="badge badge-info">@member.Role</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-warning">In Progress</span>
+                                        </td>
+                                        <td>@DateTime.Now.AddDays(-30).ToString("MMM dd, yyyy")</td>
+                                        <td>
+                                            <a href="@Url.Action("ReviewEmployee", new { id = member.Id })" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i> Review
+                                            </a>
+                                            <a href="@Url.Action("ViewOKR", new { id = member.Id })" class="btn btn-sm btn-info">
+                                                <i class="fas fa-clipboard-list"></i> View OKR
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        @if (ViewBag.PendingReviews != null && ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.PendingReviews).Any())
+                        {
+                            @foreach (var review in ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.PendingReviews).Take(3))
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-warning"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="timeline-title">@review.Employee.FirstName @review.Employee.LastName submitted OKR for review</h6>
+                                        <p class="timeline-text">@review.Employee.Role role OKR submitted for review</p>
+                                        <small class="text-muted">@(review.SubmittedDate?.ToString("MMM dd, yyyy") ?? "Recently")</small>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        @if (ViewBag.CompletedReviews != null && ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.CompletedReviews).Any())
+                        {
+                            @foreach (var review in ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.CompletedReviews).Take(2))
+                            {
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-success"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="timeline-title">@review.Employee.FirstName @review.Employee.LastName's review completed</h6>
+                                        <p class="timeline-text">@review.Employee.Role OKR review completed and signed off</p>
+                                        <small class="text-muted">@(review.FinalizedDate?.ToString("MMM dd, yyyy") ?? "Recently")</small>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        @if ((ViewBag.PendingReviews == null || !((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.PendingReviews).Any()) && 
+                             (ViewBag.CompletedReviews == null || !((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.CompletedReviews).Any()))
+                        {
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-info"></div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">No recent activity</h6>
+                                    <p class="timeline-text">No recent OKR submissions or completions to display</p>
+                                    <small class="text-muted">Check back later for updates</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -35px;
+        top: 5px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    
+    .timeline-content {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        border-left: 3px solid #e3e6f0;
+    }
+    
+    .timeline-title {
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    .timeline-text {
+        margin-bottom: 5px;
+        color: #6c757d;
+    }
+</style>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Initialize DataTable if the table exists
+            if ($.fn.DataTable && $('#teamMembersTable').length) {
+                $('#teamMembersTable').DataTable({
+                    "pageLength": 25,
+                    "order": [[ 0, "asc" ]],
+                    "responsive": true
+                });
+            }
+        });
+    </script>
+}

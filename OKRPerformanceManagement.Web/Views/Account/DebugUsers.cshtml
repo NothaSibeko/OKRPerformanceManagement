@@ -1,0 +1,106 @@
+@{
+    ViewData["Title"] = "Debug Users";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">Debug Users</h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Identity Users</h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Users != null)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Email</th>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Email Confirmed</th>
+                                        <th>Lockout Enabled</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var user in (List<OKRPerformanceManagement.Models.ApplicationUser>)ViewBag.Users)
+                                    {
+                                        <tr>
+                                            <td>@user.Email</td>
+                                            <td>@user.FirstName</td>
+                                            <td>@user.LastName</td>
+                                            <td>@user.EmailConfirmed</td>
+                                            <td>@user.LockoutEnabled</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No users found in Identity system.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Employee Records</h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.Employees != null)
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Position</th>
+                                        <th>UserId</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var employee in (List<OKRPerformanceManagement.Models.Employee>)ViewBag.Employees)
+                                    {
+                                        <tr>
+                                            <td>@employee.FirstName @employee.LastName</td>
+                                            <td>@employee.Email</td>
+                                            <td>@employee.Role</td>
+                                            <td>@employee.Position</td>
+                                            <td>@(employee.UserId ?? "NULL")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p>No employee records found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <a href="@Url.Action("Login")" class="btn btn-primary">
+                <i class="fas fa-arrow-left"></i> Back to Login
+            </a>
+        </div>
+    </div>
+</div>

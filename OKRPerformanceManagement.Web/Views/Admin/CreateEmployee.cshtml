@@ -1,0 +1,161 @@
+@model OKRPerformanceManagement.Web.Controllers.CreateEmployeeViewModel
+@{
+    ViewData["Title"] = "Create Employee";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Create New Employee</h1>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateEmployee" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="FirstName" class="form-label">First Name *</label>
+                                    <input asp-for="FirstName" class="form-control" placeholder="Enter first name" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="LastName" class="form-label">Last Name *</label>
+                                    <input asp-for="LastName" class="form-control" placeholder="Enter last name" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Email" class="form-label">Email Address *</label>
+                                    <input asp-for="Email" type="email" class="form-control" placeholder="Enter email address" />
+                                    <span asp-validation-for="Email" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Password" class="form-label">Password *</label>
+                                    <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Role" class="form-label">Role *</label>
+                                    <select asp-for="Role" class="form-control">
+                                        <option value="">Select Role</option>
+                                        <option value="Administration">Administration or Junior Support Engineer</option>
+                                        <option value="Support_Systems Engineer">Support/Systems Engineer</option>
+                                        <option value="Snr and Technical Team Leads">Senior and Technical Team Leads</option>
+                                        <option value="Manager">Manager</option>
+                                        <option value="Consultant">Consultant</option>
+                                    </select>
+                                    <span asp-validation-for="Role" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Position" class="form-label">Position *</label>
+                                    <input asp-for="Position" class="form-control" placeholder="Enter position title" />
+                                    <span asp-validation-for="Position" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="RoleId" class="form-label">Employee Role</label>
+                                    <select asp-for="RoleId" class="form-control">
+                                        <option value="">Select Employee Role</option>
+                                        @foreach (var role in ViewBag.Roles)
+                                        {
+                                            <option value="@role.Id">@role.Name</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="RoleId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="ManagerId" class="form-label">Manager</label>
+                                    <select asp-for="ManagerId" class="form-control">
+                                        <option value="">Select Manager (Optional)</option>
+                                        @foreach (var manager in ViewBag.Managers)
+                                        {
+                                            <option value="@manager.Id">@manager.FirstName @manager.LastName</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="ManagerId" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Employee
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Role Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Administration</h6>
+                        <p class="text-muted small">Administration or Junior Support Engineer</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Support/Systems Engineer</h6>
+                        <p class="text-muted small">Support/Systems Engineer</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Senior and Technical Team Leads</h6>
+                        <p class="text-muted small">Senior and Technical Team Leads</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Manager</h6>
+                        <p class="text-muted small">Manager</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Consultant</h6>
+                        <p class="text-muted small">Consultant</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
