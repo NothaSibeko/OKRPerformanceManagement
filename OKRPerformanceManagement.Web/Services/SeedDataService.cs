@@ -187,8 +187,8 @@ namespace OKRPerformanceManagement.Web.Services
                 }
 
                 _context.OKRTemplates.AddRange(templates);
-                await _context.SaveChangesAsync();
-            }
+            await _context.SaveChangesAsync();
+        }
         }
 
         private async Task SeedDefaultUsersAsync()
@@ -261,7 +261,7 @@ namespace OKRPerformanceManagement.Web.Services
                     _context.Employees.Add(employee);
             await _context.SaveChangesAsync();
         }
-            }
-        }
+    }
+}
     }
 }

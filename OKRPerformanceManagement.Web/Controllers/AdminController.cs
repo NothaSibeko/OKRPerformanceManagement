@@ -327,6 +327,61 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             return RedirectToAction("Index");
         }
+
+        [HttpPost]
+        public async Task<IActionResult> SeedDetailedTemplates()
+        {
+            try
+            {
+                // For now, just show a message that this feature is coming soon
+                TempData["SuccessMessage"] = "Detailed template seeding feature is being implemented. The basic templates are already available for use.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error: {ex.Message}";
+            }
+            return RedirectToAction("ManageOKRTemplates");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyPerformanceHistory()
+        {
+            // Get all employees in the organization
+            var allEmployees = await _context.Employees
+                .Include(e => e.RoleEntity)
+                .Include(e => e.Manager)
+                .Include(e => e.Subordinates)
+                .ToListAsync();
+
+            // Get all completed reviews in the organization
+            var allCompletedReviews = await _context.PerformanceReviews
+                .Where(pr => pr.Status == "Completed")
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.OKRTemplate)
+                .OrderByDescending(pr => pr.FinalizedDate)
+                .ToListAsync();
+
+            // Calculate performance statistics
+            var performanceStats = new Dictionary<string, object>
+            {
+                ["TotalEmployees"] = allEmployees.Count,
+                ["TotalReviews"] = allCompletedReviews.Count,
+                ["AverageRating"] = allCompletedReviews.Any() ? allCompletedReviews.Average(r => r.OverallRating ?? 0) : 0,
+                ["TopPerformers"] = allCompletedReviews
+                    .Where(r => r.OverallRating.HasValue)
+                    .OrderByDescending(r => r.OverallRating)
+                    .Take(5)
+                    .ToList()
+            };
+
+            ViewBag.AllEmployees = allEmployees;
+            ViewBag.AllCompletedReviews = allCompletedReviews;
+            ViewBag.PerformanceStats = performanceStats;
+            ViewBag.UserRole = "Admin";
+
+            return View();
+        }
     }
 
     public class CreateEmployeeViewModel

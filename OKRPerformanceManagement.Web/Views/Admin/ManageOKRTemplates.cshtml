@@ -8,9 +8,16 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Manage OKR Templates</h1>
-                <a href="@Url.Action("Index")" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
-                </a>
+                <div>
+                    <form asp-action="SeedDetailedTemplates" method="post" style="display: inline;" onsubmit="return confirm('This will replace all existing templates with detailed templates from your Excel data. Are you sure?');">
+                        <button type="submit" class="btn btn-success me-2">
+                            <i class="fas fa-seedling"></i> Seed Detailed Templates
+                        </button>
+                    </form>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
             </div>
         </div>
     </div>

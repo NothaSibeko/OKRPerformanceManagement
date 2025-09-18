@@ -1,0 +1,230 @@
+@model OKRPerformanceManagement.Models.PerformanceReview
+
+@{
+    ViewData["Title"] = "Review Details";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Review Details</h1>
+                <div>
+                    <a href="@Url.Action("MyOKRs")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to My OKRs
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Review Information</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Review Period:</strong><br>
+                    @Model.ReviewPeriodStart.ToString("MMM dd, yyyy") - @Model.ReviewPeriodEnd.ToString("MMM dd, yyyy")</p>
+                    
+                    <p><strong>Status:</strong><br>
+                    <span class="badge badge-@(Model.Status == "Draft" ? "secondary" : Model.Status == "Employee_Review" ? "warning" : Model.Status == "Manager_Review" ? "info" : "success")">
+                        @Model.Status
+                    </span></p>
+                    
+                    <p><strong>Created:</strong><br>
+                    @Model.CreatedDate.ToString("MMM dd, yyyy")</p>
+                    
+                    @if (Model.SubmittedDate.HasValue)
+                    {
+                        <p><strong>Submitted:</strong><br>
+                        @Model.SubmittedDate.Value.ToString("MMM dd, yyyy")</p>
+                    }
+                    
+                    @if (Model.Manager != null)
+                    {
+                        <p><strong>Manager:</strong><br>
+                        @Model.Manager.FirstName @Model.Manager.LastName</p>
+                    }
+                    
+                    @if (Model.OKRTemplate != null)
+                    {
+                        <p><strong>Template:</strong><br>
+                        @Model.OKRTemplate.Name</p>
+                    }
+                    
+                    @if (Model.OverallRating.HasValue)
+                    {
+                        <p><strong>Overall Rating:</strong><br>
+                        <span class="badge badge-success">@Model.OverallRating.Value.ToString("F1")</span></p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Performance Review Details</h6>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(Model.EmployeeSelfAssessment))
+                    {
+                        <div class="mb-4">
+                            <h6 class="font-weight-bold">Employee Self Assessment:</h6>
+                            <p class="text-muted">@Model.EmployeeSelfAssessment</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.ManagerAssessment))
+                    {
+                        <div class="mb-4">
+                            <h6 class="font-weight-bold">Manager Assessment:</h6>
+                            <p class="text-muted">@Model.ManagerAssessment</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.FinalAssessment))
+                    {
+                        <div class="mb-4">
+                            <h6 class="font-weight-bold">Final Assessment:</h6>
+                            <p class="text-muted">@Model.FinalAssessment</p>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.DiscussionNotes))
+                    {
+                        <div class="mb-4">
+                            <h6 class="font-weight-bold">Discussion Notes:</h6>
+                            <p class="text-muted">@Model.DiscussionNotes</p>
+                        </div>
+                    }
+
+                    @if (Model.Objectives != null && Model.Objectives.Any())
+                    {
+                        <h6 class="font-weight-bold mb-3">Objectives and Key Results:</h6>
+                        <div class="accordion" id="reviewAccordion">
+                            @foreach (var objective in Model.Objectives.OrderBy(o => o.SortOrder))
+                            {
+                                <div class="card">
+                                    <div class="card-header" id="heading@(objective.Id)">
+                                        <h2 class="mb-0">
+                                            <button class="btn btn-link btn-block text-left" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(objective.Id)" aria-expanded="true" aria-controls="collapse@(objective.Id)">
+                                                <strong>@objective.Name</strong>
+                                                <span class="badge badge-primary float-right">@objective.Weight%</span>
+                                            </button>
+                                        </h2>
+                                    </div>
+
+                                    <div id="collapse@(objective.Id)" class="collapse" aria-labelledby="heading@(objective.Id)" data-bs-parent="#reviewAccordion">
+                                        <div class="card-body">
+                                            @if (!string.IsNullOrEmpty(objective.Description))
+                                            {
+                                                <p class="text-muted mb-3">@objective.Description</p>
+                                            }
+                                            
+                                            @if (objective.KeyResults != null && objective.KeyResults.Any())
+                                            {
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead class="thead-light">
+                                                            <tr>
+                                                                <th>Key Result</th>
+                                                                <th>Target</th>
+                                                                <th>Measure</th>
+                                                                <th>Employee Rating</th>
+                                                                <th>Manager Rating</th>
+                                                                <th>Final Rating</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach (var keyResult in objective.KeyResults.OrderBy(kr => kr.SortOrder))
+                                                            {
+                                                                <tr>
+                                                                    <td>
+                                                                        <strong>@keyResult.Name</strong>
+                                                                        <br><small class="text-muted">Weight: @keyResult.Weight%</small>
+                                                                    </td>
+                                                                    <td>@keyResult.Target</td>
+                                                                    <td>@keyResult.Measure</td>
+                                                                    <td>
+                                                                        @if (keyResult.EmployeeRating.HasValue)
+                                                                        {
+                                                                            <span class="badge badge-info">@keyResult.EmployeeRating</span>
+                                                                            @if (!string.IsNullOrEmpty(keyResult.EmployeeComments))
+                                                                            {
+                                                                                <br><small class="text-muted">@keyResult.EmployeeComments</small>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">Not rated</span>
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        @if (keyResult.ManagerRating.HasValue)
+                                                                        {
+                                                                            <span class="badge badge-warning">@keyResult.ManagerRating</span>
+                                                                            @if (!string.IsNullOrEmpty(keyResult.ManagerComments))
+                                                                            {
+                                                                                <br><small class="text-muted">@keyResult.ManagerComments</small>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">Not rated</span>
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        @if (keyResult.FinalRating.HasValue)
+                                                                        {
+                                                                            <span class="badge badge-success">@keyResult.FinalRating</span>
+                                                                            @if (!string.IsNullOrEmpty(keyResult.FinalComments))
+                                                                            {
+                                                                                <br><small class="text-muted">@keyResult.FinalComments</small>
+                                                                            }
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <span class="text-muted">Not finalized</span>
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            }
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    <div class="mt-4">
+                        @if (Model.Status == "Draft" || Model.Status == "Employee_Review")
+                        {
+                            <a href="@Url.Action("EditOKR", new { id = Model.Id })" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Edit OKR
+                            </a>
+                        }
+                        
+                        <a href="@Url.Action("ViewOKR", new { id = Model.Id })" class="btn btn-info">
+                            <i class="fas fa-eye"></i> View Full OKR
+                        </a>
+                        
+                        @if (Model.Status == "Completed" || Model.Status == "Signed")
+                        {
+                            <a href="@Url.Action("DownloadPDF", new { id = Model.Id })" class="btn btn-success">
+                                <i class="fas fa-download"></i> Download PDF
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

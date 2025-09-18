@@ -1,0 +1,205 @@
+@model OKRPerformanceManagement.Models.CreateTemplateReviewViewModel
+
+@{
+    ViewData["Title"] = "Create Template-Based Review";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Create Template-Based Review</h1>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["WarningMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @TempData["WarningMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Template-Based Review Creation</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateTemplateReview" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="OKRTemplateId" class="form-label">Select OKR Template</label>
+                                    <select asp-for="OKRTemplateId" class="form-select" required>
+                                        <option value="">-- Select Template --</option>
+                                        @foreach (var template in Model.AvailableTemplates)
+                                        {
+                                            <option value="@template.Id">@template.Name (@template.Role)</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="OKRTemplateId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ReviewPeriodStart" class="form-label">Review Period Start</label>
+                                    <input asp-for="ReviewPeriodStart" class="form-control" type="date" required />
+                                    <span asp-validation-for="ReviewPeriodStart" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ReviewPeriodEnd" class="form-label">Review Period End</label>
+                                    <input asp-for="ReviewPeriodEnd" class="form-control" type="date" required />
+                                    <span asp-validation-for="ReviewPeriodEnd" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Description" class="form-label">Review Description (Optional)</label>
+                                    <input asp-for="Description" class="form-control" placeholder="Brief description of this review period" />
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="form-label">Select Team Members</label>
+                            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                                @if (Model.AvailableEmployees.Any())
+                                {
+                                    @foreach (var employee in Model.AvailableEmployees)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="SelectedEmployeeIds" 
+                                                   value="@employee.Id" 
+                                                   id="employee_@employee.Id" />
+                                            <label class="form-check-label" for="employee_@employee.Id">
+                                                <strong>@employee.FirstName @employee.LastName</strong>
+                                                <small class="text-muted">(@employee.Role - @employee.Position)</small>
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No team members available for review creation.</p>
+                                }
+                            </div>
+                            <small class="form-text text-muted">Select all team members who should receive this review template.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create Reviews
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">How Template Reviews Work</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold text-primary">Step 1: Select Template</h6>
+                        <p class="small">Choose the OKR template that matches the role of your team members.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold text-primary">Step 2: Set Review Period</h6>
+                        <p class="small">Define the start and end dates for this review cycle.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold text-primary">Step 3: Select Team Members</h6>
+                        <p class="small">Choose which team members will receive this review template.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold text-primary">Step 4: System Creates Reviews</h6>
+                        <p class="small">The system automatically creates individual reviews for each selected team member with all objectives and key results from the template.</p>
+                    </div>
+                    <div class="alert alert-info">
+                        <small>
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> Each team member will get their own individual review based on the selected template. They can then fill out their responses and you can review and sign them.
+                        </small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Available Templates</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.AvailableTemplates.Any())
+                    {
+                        @foreach (var template in Model.AvailableTemplates)
+                        {
+                            <div class="mb-2">
+                                <strong>@template.Name</strong>
+                                <br>
+                                <small class="text-muted">@template.Description</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No templates available. Please contact your administrator.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add some basic validation
+            $('form').on('submit', function(e) {
+                var selectedEmployees = $('input[name="SelectedEmployeeIds"]:checked').length;
+                if (selectedEmployees === 0) {
+                    e.preventDefault();
+                    alert('Please select at least one team member.');
+                    return false;
+                }
+            });
+
+            // Select all checkbox functionality
+            $('#selectAll').on('change', function() {
+                $('input[name="SelectedEmployeeIds"]').prop('checked', this.checked);
+            });
+        });
+    </script>
+}

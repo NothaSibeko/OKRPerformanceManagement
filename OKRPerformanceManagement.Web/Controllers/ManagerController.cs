@@ -54,7 +54,7 @@ namespace OKRPerformanceManagement.Web.Controllers
             ViewBag.PendingReviews = pendingReviews;
             ViewBag.CompletedReviews = completedReviews;
             ViewBag.Manager = currentEmployee;
-            ViewBag.UserRole = currentEmployee.Role;
+            ViewBag.UserRole = "Manager";
 
             return View();
         }
@@ -534,6 +534,209 @@ namespace OKRPerformanceManagement.Web.Controllers
                 // Log error but don't fail employee creation
                 // OKR can be created manually later
             }
+        }
+
+        // Template-based Review Creation Methods
+        [HttpGet]
+        public async Task<IActionResult> CreateTemplateReview()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Manager record not found.");
+            }
+
+            var model = new CreateTemplateReviewViewModel
+            {
+                ReviewPeriodStart = DateTime.Now,
+                ReviewPeriodEnd = DateTime.Now.AddMonths(3),
+                AvailableTemplates = await _context.OKRTemplates
+                    .Where(t => t.IsActive)
+                    .Include(t => t.RoleEntity)
+                    .ToListAsync(),
+                AvailableEmployees = await _context.Employees
+                    .Where(e => e.ManagerId == currentEmployee.Id && e.IsActive)
+                    .Include(e => e.RoleEntity)
+                    .ToListAsync()
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateTemplateReview(CreateTemplateReviewViewModel model)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Manager record not found.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                // Repopulate the model
+                model.AvailableTemplates = await _context.OKRTemplates
+                    .Where(t => t.IsActive)
+                    .Include(t => t.RoleEntity)
+                    .ToListAsync();
+                model.AvailableEmployees = await _context.Employees
+                    .Where(e => e.ManagerId == currentEmployee.Id && e.IsActive)
+                    .Include(e => e.RoleEntity)
+                    .ToListAsync();
+                return View(model);
+            }
+
+            // Get the selected template
+            var template = await _context.OKRTemplates
+                .Include(t => t.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .FirstOrDefaultAsync(t => t.Id == model.OKRTemplateId);
+
+            if (template == null)
+            {
+                TempData["ErrorMessage"] = "Selected template not found.";
+                return RedirectToAction("CreateTemplateReview");
+            }
+
+            // Get selected employees
+            var selectedEmployees = await _context.Employees
+                .Where(e => model.SelectedEmployeeIds.Contains(e.Id))
+                .ToListAsync();
+
+            if (!selectedEmployees.Any())
+            {
+                TempData["ErrorMessage"] = "Please select at least one team member.";
+                return RedirectToAction("CreateTemplateReview");
+            }
+
+            var createdReviews = new List<int>();
+
+            // Create a review for each selected employee
+            foreach (var employee in selectedEmployees)
+            {
+                // Check if employee already has an active review
+                var existingReview = await _context.PerformanceReviews
+                    .FirstOrDefaultAsync(pr => pr.EmployeeId == employee.Id && 
+                        (pr.Status == "Draft" || pr.Status == "Employee_Review" || pr.Status == "Manager_Review"));
+
+                if (existingReview != null)
+                {
+                    TempData["WarningMessage"] = $"Employee {employee.FirstName} {employee.LastName} already has an active review.";
+                    continue;
+                }
+
+                // Create the performance review
+                var performanceReview = new PerformanceReview
+                {
+                    EmployeeId = employee.Id,
+                    ManagerId = currentEmployee.Id,
+                    Status = "Draft",
+                    ReviewPeriodStart = model.ReviewPeriodStart,
+                    ReviewPeriodEnd = model.ReviewPeriodEnd,
+                    CreatedDate = DateTime.Now,
+                    OKRTemplateId = template.Id,
+                    EmployeeSelfAssessment = model.Description
+                };
+
+                _context.PerformanceReviews.Add(performanceReview);
+                await _context.SaveChangesAsync();
+
+                // Create objectives and key results from template
+                foreach (var templateObjective in template.Objectives)
+                {
+                    var objective = new Objective
+                    {
+                        PerformanceReviewId = performanceReview.Id,
+                        Name = templateObjective.Name,
+                        Description = templateObjective.Description,
+                        Weight = templateObjective.Weight,
+                        SortOrder = templateObjective.SortOrder
+                    };
+
+                    _context.Objectives.Add(objective);
+                    await _context.SaveChangesAsync();
+
+                    // Create key results for this objective
+                    foreach (var templateKeyResult in templateObjective.KeyResults)
+                    {
+                        var keyResult = new KeyResult
+                        {
+                            ObjectiveId = objective.Id,
+                            Name = templateKeyResult.Name,
+                            Target = templateKeyResult.Target,
+                            Measure = templateKeyResult.Measure,
+                            Objectives = templateKeyResult.Objectives,
+                            MeasurementSource = templateKeyResult.MeasurementSource,
+                            Weight = templateKeyResult.Weight,
+                            SortOrder = templateKeyResult.SortOrder,
+                            EmployeeRating = null,
+                            ManagerRating = null,
+                            FinalRating = null,
+                            EmployeeComments = "",
+                            ManagerComments = "",
+                            FinalComments = "",
+                            DiscussionNotes = ""
+                        };
+
+                        _context.KeyResults.Add(keyResult);
+                    }
+                }
+
+                createdReviews.Add(performanceReview.Id);
+            }
+
+            await _context.SaveChangesAsync();
+
+            if (createdReviews.Any())
+            {
+                TempData["SuccessMessage"] = $"Successfully created {createdReviews.Count} performance review(s) based on the {template.Name} template.";
+                return RedirectToAction("Index");
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "No reviews were created. Please check for existing active reviews.";
+                return RedirectToAction("CreateTemplateReview");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyPerformanceHistory()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentManager == null)
+            {
+                return NotFound("Manager record not found.");
+            }
+
+            // Get all employees managed by this manager
+            var teamMembers = await _context.Employees
+                .Where(e => e.ManagerId == currentManager.Id)
+                .Include(e => e.RoleEntity)
+                .ToListAsync();
+
+            // Get completed reviews for all team members
+            var completedReviews = await _context.PerformanceReviews
+                .Where(pr => pr.ManagerId == currentManager.Id && pr.Status == "Completed")
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.OKRTemplate)
+                .OrderByDescending(pr => pr.FinalizedDate)
+                .ToListAsync();
+
+            ViewBag.CurrentManager = currentManager;
+            ViewBag.CompletedReviews = completedReviews;
+            ViewBag.TeamMembers = teamMembers;
+            ViewBag.UserRole = "Manager";
+
+            return View();
         }
 
     }

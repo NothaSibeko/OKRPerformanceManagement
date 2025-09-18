@@ -1,0 +1,239 @@
+@{
+    ViewData["Title"] = "My Performance History";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">My Performance History</h1>
+                <a href="@Url.Action("MyOKRs")" class="btn btn-primary">
+                    <i class="fas fa-eye"></i> View Current OKRs
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.CurrentEmployee != null)
+    {
+        var currentEmployee = ViewBag.CurrentEmployee as OKRPerformanceManagement.Models.Employee;
+        var completedReviews = ViewBag.CompletedReviews as List<OKRPerformanceManagement.Models.PerformanceReview>;
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user fa-3x text-gray-300"></i>
+                            </div>
+                            <h4 class="font-weight-bold">@currentEmployee.FirstName @currentEmployee.LastName</h4>
+                            <p class="text-muted">@currentEmployee.Position</p>
+                            <p class="text-muted">@currentEmployee.Role</p>
+                            <p class="text-muted">@currentEmployee.Email</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Performance Summary</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="h4 font-weight-bold text-primary">@(completedReviews?.Count ?? 0)</div>
+                                <div class="text-muted">Completed Reviews</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="h4 font-weight-bold text-success">
+                                    @if (completedReviews?.Any() == true)
+                                    {
+                                        @completedReviews.Average(r => r.OverallRating ?? 0).ToString("F1")
+                                    }
+                                    else
+                                    {
+                                        <text>N/A</text>
+                                    }
+                                </div>
+                                <div class="text-muted">Average Rating</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Completed Performance Reviews</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (completedReviews != null && completedReviews.Any())
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="thead-light">
+                                        <tr>
+                                            <th>Review Period</th>
+                                            <th>Manager</th>
+                                            <th>Template</th>
+                                            <th>Overall Rating</th>
+                                            <th>Completed Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var review in completedReviews)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@review.ReviewPeriodStart.ToString("MMM dd, yyyy")</strong><br>
+                                                    <small class="text-muted">to @review.ReviewPeriodEnd.ToString("MMM dd, yyyy")</small>
+                                                </td>
+                                                <td>
+                                                    @if (review.Manager != null)
+                                                    {
+                                                        <text>@review.Manager.FirstName @review.Manager.LastName</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">N/A</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (review.OKRTemplate != null)
+                                                    {
+                                                        <text>@review.OKRTemplate.Name</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">N/A</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (review.OverallRating.HasValue)
+                                                    {
+                                                        <span class="badge badge-@(review.OverallRating >= 4 ? "success" : review.OverallRating >= 3 ? "warning" : "danger")">
+                                                            @review.OverallRating.Value.ToString("F1")
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">N/A</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    @if (review.FinalizedDate.HasValue)
+                                                    {
+                                                        <text>@review.FinalizedDate.Value.ToString("MMM dd, yyyy")</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">N/A</span>
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <a href="@Url.Action("ViewOKR", "Manager", new { id = currentEmployee.Id, reviewId = review.Id })" class="btn btn-sm btn-primary">
+                                                        <i class="fas fa-eye"></i> View Details
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                No completed performance reviews found. Your completed reviews will appear here once they are finalized by your manager.
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                @if (completedReviews != null && completedReviews.Any())
+                {
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Performance Trends</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Rating Distribution</h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: @((completedReviews.Count(r => r.OverallRating >= 4) * 100.0 / completedReviews.Count).ToString("F0"))%">
+                                            Excellent (4-5): @completedReviews.Count(r => r.OverallRating >= 4)
+                                        </div>
+                                    </div>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: @((completedReviews.Count(r => r.OverallRating >= 3 && r.OverallRating < 4) * 100.0 / completedReviews.Count).ToString("F0"))%">
+                                            Good (3-4): @completedReviews.Count(r => r.OverallRating >= 3 && r.OverallRating < 4)
+                                        </div>
+                                    </div>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: @((completedReviews.Count(r => r.OverallRating < 3) * 100.0 / completedReviews.Count).ToString("F0"))%">
+                                            Needs Improvement (&lt;3): @completedReviews.Count(r => r.OverallRating < 3)
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Recent Performance</h6>
+                                    @if (completedReviews.Count >= 2)
+                                    {
+                                        var latest = completedReviews.First();
+                                        var previous = completedReviews.Skip(1).First();
+                                        var performanceChange = (latest.OverallRating ?? 0) - (previous.OverallRating ?? 0);
+                                        
+                                        <div class="text-center">
+                                            @if (performanceChange > 0)
+                                            {
+                                                <div class="h4 text-success">
+                                                    <i class="fas fa-arrow-up"></i> +@performanceChange.ToString("F1")
+                                                </div>
+                                            }
+                                            else if (performanceChange < 0)
+                                            {
+                                                <div class="h4 text-danger">
+                                                    <i class="fas fa-arrow-down"></i> @performanceChange.ToString("F1")
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="h4 text-muted">
+                                                    <i class="fas fa-minus"></i> No change
+                                                </div>
+                                            }
+                                            <small class="text-muted">vs. previous review</small>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            <br>Need at least 2 reviews to show trends
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            Employee record not found.
+        </div>
+    }
+</div>

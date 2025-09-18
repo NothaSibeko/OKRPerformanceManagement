@@ -23,47 +23,6 @@ namespace OKRPerformanceManagement.Web.Controllers
             _context = context;
         }
 
-        public async Task<IActionResult> Index()
-        {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var currentEmployee = await _context.Employees
-                .Include(e => e.RoleEntity)
-                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
-
-            if (currentEmployee == null)
-            {
-                return NotFound("Employee record not found.");
-            }
-
-            // Get all performance reviews for this employee that were created by a manager
-            var myOKRs = await _context.PerformanceReviews
-                .Where(pr => pr.EmployeeId == currentEmployee.Id && pr.ManagerId != null)
-                .Include(pr => pr.Manager)
-                .Include(pr => pr.OKRTemplate)
-                .OrderByDescending(pr => pr.CreatedDate)
-                .ToListAsync();
-
-            // Get current OKR (most recent non-completed)
-            var currentOKR = myOKRs
-                .Where(pr => pr.Status != "Completed")
-                .OrderByDescending(pr => pr.CreatedDate)
-                .FirstOrDefault();
-
-            // Categorize OKRs by status
-            var inProgressOKRs = myOKRs.Where(pr => pr.Status == "Draft" || pr.Status == "Employee_Review").ToList();
-            var pendingReviewOKRs = myOKRs.Where(pr => pr.Status == "Manager_Review" || pr.Status == "Discussion").ToList();
-            var completedOKRs = myOKRs.Where(pr => pr.Status == "Completed" || pr.Status == "Signed").ToList();
-
-            ViewBag.Employee = currentEmployee;
-            ViewBag.MyOKRs = myOKRs;
-            ViewBag.CurrentOKR = currentOKR;
-            ViewBag.InProgressOKRs = inProgressOKRs;
-            ViewBag.PendingReviewOKRs = pendingReviewOKRs;
-            ViewBag.CompletedOKRs = completedOKRs;
-            ViewBag.UserRole = currentEmployee.Role;
-
-            return View();
-        }
 
         [HttpGet]
         public async Task<IActionResult> ReviewDetails(int id)
@@ -190,6 +149,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             ViewBag.CurrentEmployee = currentEmployee;
             ViewBag.CompletedReviews = completedReviews;
+            ViewBag.UserRole = "Employee";
 
             return View();
         }
@@ -238,15 +198,31 @@ namespace OKRPerformanceManagement.Web.Controllers
                 .Include(pr => pr.Comments)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
 
-            if (review == null || review.EmployeeId != currentEmployee?.Id)
+            // Debug information
+            ViewBag.DebugInfo = $"Current User ID: {currentUserId}, Current Employee ID: {currentEmployee?.Id}, Review ID: {id}, Review Employee ID: {review?.EmployeeId}";
+
+            if (review == null)
             {
-                return NotFound();
+                ViewBag.ErrorMessage = "Review not found in database";
+                return View();
+            }
+
+            if (currentEmployee == null)
+            {
+                ViewBag.ErrorMessage = "Current employee not found";
+                return View();
+            }
+
+            if (review.EmployeeId != currentEmployee.Id)
+            {
+                ViewBag.ErrorMessage = $"Review belongs to employee {review.EmployeeId} but current user is employee {currentEmployee.Id}";
+                return View();
             }
 
             ViewBag.Employee = currentEmployee;
             ViewBag.OKR = review;
 
-            return View();
+            return View(review);
         }
 
         [HttpGet]
@@ -350,33 +326,6 @@ namespace OKRPerformanceManagement.Web.Controllers
             await _context.SaveChangesAsync();
 
             return RedirectToAction("ViewOKR", new { id = review.Id });
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> SelfAssessment()
-        {
-            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var currentEmployee = await _context.Employees
-                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
-
-            if (currentEmployee == null)
-            {
-                return NotFound("Employee record not found.");
-            }
-
-            // Get pending reviews that need self-assessment
-            var pendingReviews = await _context.PerformanceReviews
-                .Where(pr => pr.EmployeeId == currentEmployee.Id && pr.Status == "Employee_Review")
-                .Include(pr => pr.Manager)
-                .Include(pr => pr.Objectives)
-                    .ThenInclude(o => o.KeyResults)
-                .Include(pr => pr.OKRTemplate)
-                .ToListAsync();
-
-            ViewBag.Employee = currentEmployee;
-            ViewBag.PendingReviews = pendingReviews;
-
-            return View();
         }
 
         [HttpGet]

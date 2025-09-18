@@ -1,0 +1,184 @@
+@{
+    ViewData["Title"] = "Review Employee";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Review Employee</h1>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (ViewBag.Employee != null)
+    {
+        var employee = ViewBag.Employee as OKRPerformanceManagement.Models.Employee;
+        var currentOKR = ViewBag.CurrentOKR as OKRPerformanceManagement.Models.PerformanceReview;
+
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-user fa-3x text-gray-300"></i>
+                            </div>
+                            <h4 class="font-weight-bold">@employee.FirstName @employee.LastName</h4>
+                            <p class="text-muted">@employee.Position</p>
+                            <p class="text-muted">@employee.Role</p>
+                            <p class="text-muted">@employee.Email</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Current Performance Review</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (currentOKR != null)
+                        {
+                            <div class="mb-3">
+                                <h5>Review Period: @currentOKR.ReviewPeriodStart.ToString("MMM dd, yyyy") - @currentOKR.ReviewPeriodEnd.ToString("MMM dd, yyyy")</h5>
+                                <span class="badge badge-@(currentOKR.Status == "Draft" ? "secondary" : currentOKR.Status == "Employee_Review" ? "warning" : currentOKR.Status == "Manager_Review" ? "info" : "success")">
+                                    @currentOKR.Status
+                                </span>
+                            </div>
+
+                            @if (currentOKR.Objectives != null && currentOKR.Objectives.Any())
+                            {
+                                <div class="accordion" id="objectivesAccordion">
+                                    @foreach (var objective in currentOKR.Objectives.OrderBy(o => o.SortOrder))
+                                    {
+                                        <div class="card">
+                                            <div class="card-header" id="heading@(objective.Id)">
+                                                <h2 class="mb-0">
+                                                    <button class="btn btn-link btn-block text-left" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@(objective.Id)" aria-expanded="true" aria-controls="collapse@(objective.Id)">
+                                                        <strong>@objective.Name</strong>
+                                                        <span class="badge badge-primary float-right">@objective.Weight%</span>
+                                                    </button>
+                                                </h2>
+                                            </div>
+
+                                            <div id="collapse@(objective.Id)" class="collapse" aria-labelledby="heading@(objective.Id)" data-bs-parent="#objectivesAccordion">
+                                                <div class="card-body">
+                                                    <p class="text-muted">@objective.Description</p>
+                                                    
+                                                    @if (objective.KeyResults != null && objective.KeyResults.Any())
+                                                    {
+                                                        <h6>Key Results:</h6>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Key Result</th>
+                                                                        <th>Target</th>
+                                                                        <th>Employee Rating</th>
+                                                                        <th>Manager Rating</th>
+                                                                        <th>Final Rating</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach (var keyResult in objective.KeyResults.OrderBy(kr => kr.SortOrder))
+                                                                    {
+                                                                        <tr>
+                                                                            <td>
+                                                                                <strong>@keyResult.Name</strong>
+                                                                                <br><small class="text-muted">@keyResult.Measure</small>
+                                                                            </td>
+                                                                            <td>@keyResult.Target</td>
+                                                                            <td>
+                                                                                @if (keyResult.EmployeeRating.HasValue)
+                                                                                {
+                                                                                    <span class="badge badge-info">@keyResult.EmployeeRating</span>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <span class="text-muted">Not rated</span>
+                                                                                }
+                                                                            </td>
+                                                                            <td>
+                                                                                @if (keyResult.ManagerRating.HasValue)
+                                                                                {
+                                                                                    <span class="badge badge-warning">@keyResult.ManagerRating</span>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <span class="text-muted">Not rated</span>
+                                                                                }
+                                                                            </td>
+                                                                            <td>
+                                                                                @if (keyResult.FinalRating.HasValue)
+                                                                                {
+                                                                                    <span class="badge badge-success">@keyResult.FinalRating</span>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <span class="text-muted">Not finalized</span>
+                                                                                }
+                                                                            </td>
+                                                                        </tr>
+                                                                    }
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="mt-4">
+                                    <a href="@Url.Action("ViewOKR", new { id = employee.Id })" class="btn btn-primary">
+                                        <i class="fas fa-eye"></i> View Full OKR
+                                    </a>
+                                    @if (currentOKR.Status == "Employee_Review")
+                                    {
+                                        <a href="@Url.Action("ReviewDetails", new { id = currentOKR.Id })" class="btn btn-warning">
+                                            <i class="fas fa-edit"></i> Review & Rate
+                                        </a>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    No objectives found for this review.
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                No active performance review found for this employee.
+                            </div>
+                            <a href="@Url.Action("CreateTemplateReview")" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Create Review
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i>
+            Employee not found.
+        </div>
+    }
+</div>

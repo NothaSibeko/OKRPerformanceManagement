@@ -74,7 +74,7 @@
                             <a href="@Url.Action("Index", "Manager")" class="btn btn-primary btn-lg btn-block mb-2">Manager Dashboard</a>
                         </div>
                         <div class="col-md-3">
-                            <a href="@Url.Action("CreateReview", "Manager")" class="btn btn-success btn-lg btn-block mb-2">Create New Review</a>
+                            <a href="@Url.Action("CreateTemplateReview", "Manager")" class="btn btn-success btn-lg btn-block mb-2">Create Template Review</a>
                         </div>
                         <div class="col-md-3">
                             <a href="@Url.Action("PendingReviews", "Manager")" class="btn btn-info btn-lg btn-block mb-2">Pending Reviews</a>
@@ -95,19 +95,16 @@
                             <a href="@Url.Action("ManageRoles", "Admin")" class="btn btn-info btn-lg btn-block mb-2">Manage Roles</a>
                         </div>
                         <div class="col-md-3">
-                            <a href="@Url.Action("Index", "Employee")" class="btn btn-warning btn-lg btn-block mb-2">My Reviews</a>
+                            <a href="@Url.Action("Index", "Admin")" class="btn btn-warning btn-lg btn-block mb-2">My Reviews</a>
                         </div>
                     }
                     else
                     {
-                        <div class="col-md-4">
-                            <a href="@Url.Action("Index", "Employee")" class="btn btn-primary btn-lg btn-block mb-2">My Performance Reviews</a>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("MyPerformanceHistory", "Employee")" class="btn btn-primary btn-lg btn-block mb-2">My Performance Reviews</a>
                         </div>
-                        <div class="col-md-4">
-                            <a href="@Url.Action("SelfAssessment", "Employee")" class="btn btn-success btn-lg btn-block mb-2">Complete Self Assessment</a>
-                        </div>
-                        <div class="col-md-4">
-                            <a href="@Url.Action("MyPerformanceHistory", "Employee")" class="btn btn-info btn-lg btn-block mb-2">Review History</a>
+                        <div class="col-md-6">
+                            <a href="@Url.Action("MyOKRs", "Employee")" class="btn btn-info btn-lg btn-block mb-2">View Current OKRs</a>
                         </div>
                     }
                 </div>
