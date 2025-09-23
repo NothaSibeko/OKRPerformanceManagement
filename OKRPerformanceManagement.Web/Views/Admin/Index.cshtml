@@ -15,6 +15,9 @@
                     <a href="@Url.Action("ManageRoles")" class="btn btn-secondary">
                         <i class="fas fa-users-cog"></i> Manage Roles
                     </a>
+                    <a href="@Url.Action("DebugEmployeeOKRs")" class="btn btn-info">
+                        <i class="fas fa-bug"></i> Debug OKRs
+                    </a>
                     <form method="post" action="@Url.Action("ReSeedOKRTemplates")" style="display: inline;">
                         <button type="submit" class="btn btn-warning" onclick="return confirm('This will update all OKR templates with the latest structure. Continue?')">
                             <i class="fas fa-sync-alt"></i> Update OKR Templates

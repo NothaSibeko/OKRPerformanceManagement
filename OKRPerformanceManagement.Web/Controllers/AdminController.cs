@@ -382,6 +382,105 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             return View();
         }
+
+        [HttpGet]
+        public async Task<IActionResult> DebugEmployeeOKRs(string email = null)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                // Show all employees with their OKR counts
+                var employeesWithOKRs = await _context.Employees
+                    .Select(e => new
+                    {
+                        e.Id,
+                        e.FirstName,
+                        e.LastName,
+                        e.Email,
+                        e.Role,
+                        ReviewCount = _context.PerformanceReviews.Count(pr => pr.EmployeeId == e.Id),
+                        ObjectiveCount = _context.Objectives.Count(o => o.PerformanceReview.EmployeeId == e.Id),
+                        KeyResultCount = _context.KeyResults.Count(kr => kr.Objective.PerformanceReview.EmployeeId == e.Id)
+                    })
+                    .OrderBy(e => e.Email)
+                    .ToListAsync();
+
+                ViewBag.EmployeesWithOKRs = employeesWithOKRs;
+                return View();
+            }
+            else
+            {
+                // Show detailed OKR data for specific employee
+                var employee = await _context.Employees
+                    .FirstOrDefaultAsync(e => e.Email == email);
+
+                if (employee == null)
+                {
+                    TempData["ErrorMessage"] = $"Employee with email '{email}' not found.";
+                    return RedirectToAction("DebugEmployeeOKRs");
+                }
+
+                var reviews = await _context.PerformanceReviews
+                    .Where(pr => pr.EmployeeId == employee.Id)
+                    .Include(pr => pr.Objectives)
+                        .ThenInclude(o => o.KeyResults)
+                    .Include(pr => pr.OKRTemplate)
+                    .Include(pr => pr.Manager)
+                    .ToListAsync();
+
+                ViewBag.Employee = employee;
+                ViewBag.Reviews = reviews;
+                return View("DebugEmployeeOKRsDetail");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CleanupEmployeeOKRs(int employeeId)
+        {
+            try
+            {
+                var employee = await _context.Employees.FindAsync(employeeId);
+                if (employee == null)
+                {
+                    TempData["ErrorMessage"] = "Employee not found.";
+                    return RedirectToAction("DebugEmployeeOKRs");
+                }
+
+                // Get all reviews for this employee
+                var reviews = await _context.PerformanceReviews
+                    .Where(pr => pr.EmployeeId == employeeId)
+                    .Include(pr => pr.Objectives)
+                        .ThenInclude(o => o.KeyResults)
+                    .ToListAsync();
+
+                // Delete key results first
+                foreach (var review in reviews)
+                {
+                    foreach (var objective in review.Objectives)
+                    {
+                        _context.KeyResults.RemoveRange(objective.KeyResults);
+                    }
+                }
+
+                // Delete objectives
+                foreach (var review in reviews)
+                {
+                    _context.Objectives.RemoveRange(review.Objectives);
+                }
+
+                // Delete performance reviews
+                _context.PerformanceReviews.RemoveRange(reviews);
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Successfully cleaned up all OKR data for {employee.FirstName} {employee.LastName} ({employee.Email}).";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = $"Error cleaning up OKR data: {ex.Message}";
+            }
+
+            return RedirectToAction("DebugEmployeeOKRs");
+        }
     }
 
     public class CreateEmployeeViewModel

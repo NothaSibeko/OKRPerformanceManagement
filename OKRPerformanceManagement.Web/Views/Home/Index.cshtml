@@ -18,42 +18,177 @@
     }
 </div>
 
-@if (userRole == "Manager" || userRole == "Admin")
+@if (userRole == "Admin")
 {
     <div class="row mt-5">
         <div class="col-md-3">
             <div class="card text-white bg-primary mb-3">
-                <div class="card-header">Employees</div>
+                <div class="card-header">Total Employees</div>
                 <div class="card-body">
                     <h4 class="card-title">@ViewBag.EmployeeCount</h4>
-                    <p class="card-text">Total employees in the system</p>
+                    <p class="card-text">All employees in the system</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-success mb-3">
-                <div class="card-header">Performance Reviews</div>
+                <div class="card-header">Active Reviews</div>
                 <div class="card-body">
-                    <h4 class="card-title">@ViewBag.ReviewCount</h4>
-                    <p class="card-text">Active performance reviews</p>
+                    <h4 class="card-title">@ViewBag.ActiveReviews</h4>
+                    <p class="card-text">Reviews in progress</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-info mb-3">
-                <div class="card-header">Objectives</div>
+                <div class="card-header">Managers</div>
                 <div class="card-body">
-                    <h4 class="card-title">@ViewBag.ObjectiveCount</h4>
-                    <p class="card-text">Total objectives set</p>
+                    <h4 class="card-title">@ViewBag.ManagerCount</h4>
+                    <p class="card-text">Total managers</p>
                 </div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="card text-white bg-warning mb-3">
-                <div class="card-header">Key Results</div>
+                <div class="card-header">Completed Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.CompletedReviews</h4>
+                    <p class="card-text">Reviews completed</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (userRole == "Manager")
+{
+    <div class="row mt-5">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">My Team Members</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.EmployeeCount</h4>
+                    <p class="card-text">Team members under my management</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Pending Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.PendingReviews</h4>
+                    <p class="card-text">Reviews awaiting my action</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Completed Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.CompletedReviews</h4>
+                    <p class="card-text">Reviews completed this period</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Team Objectives</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.ObjectiveCount</h4>
+                    <p class="card-text">Objectives set for my team</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    @if (ViewBag.EmployeeCount == 0)
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="alert alert-info">
+                    <h5><i class="fas fa-info-circle"></i> No Team Members Assigned</h5>
+                    <p>You currently don't have any team members assigned to you. As a manager, you can:</p>
+                    <ul>
+                        <li>Create new employees and assign them to your team</li>
+                        <li>Contact your administrator to assign existing employees to your team</li>
+                        <li>Use the "Create Employee" button below to add team members</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-users"></i> My Team Members</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var member in ViewBag.TeamMembers)
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-left-primary">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
+                                                    @member.FirstName.Substring(0, 1)@member.LastName.Substring(0, 1)
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">@member.FirstName @member.LastName</h6>
+                                                    <small class="text-muted">@member.Position</small>
+                                                    <br>
+                                                    <span class="badge badge-info">@member.Role</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div class="row mt-5">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">My Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.ReviewCount</h4>
+                    <p class="card-text">My performance reviews</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">My Objectives</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.ObjectiveCount</h4>
+                    <p class="card-text">Objectives assigned to me</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">My Key Results</div>
                 <div class="card-body">
                     <h4 class="card-title">@ViewBag.KeyResultCount</h4>
-                    <p class="card-text">Key results tracked</p>
+                    <p class="card-text">Key results to achieve</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Active Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@(ViewBag.MyActiveReviews?.Count ?? 0)</h4>
+                    <p class="card-text">Reviews in progress</p>
                 </div>
             </div>
         </div>
@@ -112,4 +247,29 @@
         </div>
     </div>
 </div>
+
+<style>
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+    
+    .border-left-primary {
+        border-left: 4px solid #007bff !important;
+    }
+    
+    .border-left-success {
+        border-left: 4px solid #28a745 !important;
+    }
+    
+    .border-left-warning {
+        border-left: 4px solid #ffc107 !important;
+    }
+    
+    .border-left-info {
+        border-left: 4px solid #17a2b8 !important;
+    }
+</style>
 

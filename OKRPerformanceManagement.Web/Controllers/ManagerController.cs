@@ -396,10 +396,7 @@ namespace OKRPerformanceManagement.Web.Controllers
                     {
                         await _userManager.AddToRoleAsync(user, model.Role);
                         
-                        // Automatically create OKR for the new employee
-                        await CreateAutomaticOKRForEmployee(employee);
-                        
-                        TempData["SuccessMessage"] = $"Employee '{model.FirstName} {model.LastName}' has been created successfully and can now log in! An OKR has been automatically assigned based on their role.";
+                        TempData["SuccessMessage"] = $"Employee '{model.FirstName} {model.LastName}' has been created successfully and can now log in! You can now create an OKR for them when ready.";
                     }
                     catch (Exception ex)
                     {
@@ -446,95 +443,6 @@ namespace OKRPerformanceManagement.Web.Controllers
             return View(model);
         }
 
-        private async Task CreateAutomaticOKRForEmployee(Employee employee)
-        {
-            try
-            {
-                // Get the appropriate OKR template for this role
-                var okrTemplate = await _context.OKRTemplates
-                    .Include(t => t.Objectives)
-                        .ThenInclude(o => o.KeyResults)
-                    .FirstOrDefaultAsync(t => t.Role == employee.Role && t.IsActive);
-
-                if (okrTemplate == null)
-                {
-                    // Log warning but don't fail - OKR can be created manually later
-                    return;
-                }
-
-                // Create the performance review with current year period
-                var currentYear = DateTime.Now.Year;
-                var performanceReview = new PerformanceReview
-                {
-                    EmployeeId = employee.Id,
-                    ManagerId = employee.ManagerId ?? 0,
-                    OKRTemplateId = okrTemplate.Id,
-                    ReviewPeriodStart = new DateTime(currentYear, 1, 1),
-                    ReviewPeriodEnd = new DateTime(currentYear, 12, 31),
-                    Status = "Draft",
-                    CreatedDate = DateTime.Now,
-                    EmployeeSelfAssessment = "",
-                    ManagerAssessment = "",
-                    FinalAssessment = "",
-                    DiscussionNotes = "",
-                    EmployeeSignature = "",
-                    ManagerSignature = ""
-                };
-
-                _context.PerformanceReviews.Add(performanceReview);
-                await _context.SaveChangesAsync();
-
-                // Create objectives and key results from template
-                foreach (var templateObjective in okrTemplate.Objectives)
-                {
-                    var objective = new Objective
-                    {
-                        PerformanceReviewId = performanceReview.Id,
-                        Name = templateObjective.Name,
-                        Description = templateObjective.Description,
-                        Weight = templateObjective.Weight,
-                        SortOrder = templateObjective.SortOrder
-                    };
-
-                    _context.Objectives.Add(objective);
-                    await _context.SaveChangesAsync();
-
-                    // Create key results for this objective
-                    foreach (var templateKeyResult in templateObjective.KeyResults)
-                    {
-                        var keyResult = new KeyResult
-                        {
-                            ObjectiveId = objective.Id,
-                            Name = templateKeyResult.Name,
-                            Target = templateKeyResult.Target,
-                            Measure = templateKeyResult.Measure,
-                            Objectives = templateKeyResult.Objectives,
-                            MeasurementSource = templateKeyResult.MeasurementSource,
-                            Weight = templateKeyResult.Weight,
-                            SortOrder = templateKeyResult.SortOrder,
-                            Rating1Description = templateKeyResult.Rating1Description,
-                            Rating2Description = templateKeyResult.Rating2Description,
-                            Rating3Description = templateKeyResult.Rating3Description,
-                            Rating4Description = templateKeyResult.Rating4Description,
-                            Rating5Description = templateKeyResult.Rating5Description,
-                            EmployeeComments = "",
-                            ManagerComments = "",
-                            FinalComments = "",
-                            DiscussionNotes = ""
-                        };
-
-                        _context.KeyResults.Add(keyResult);
-                    }
-                }
-
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log error but don't fail employee creation
-                // OKR can be created manually later
-            }
-        }
 
         // Template-based Review Creation Methods
         [HttpGet]

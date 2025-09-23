@@ -1,0 +1,149 @@
+@{
+    ViewData["Title"] = "Debug Employee OKRs";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Debug Employee OKRs</h1>
+                <a href="@Url.Action("Index", "Admin")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Admin Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Employee OKR Summary</h6>
+                    <small class="text-muted">This shows all employees and their current OKR counts. Employees with non-zero counts may have automatically created OKRs that need cleanup.</small>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Reviews</th>
+                                    <th>Objectives</th>
+                                    <th>Key Results</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var employee in ViewBag.EmployeesWithOKRs)
+                                {
+                                    <tr class="@(employee.ReviewCount > 0 ? "table-warning" : "")">
+                                        <td>@employee.FirstName @employee.LastName</td>
+                                        <td>@employee.Email</td>
+                                        <td>
+                                            <span class="badge badge-info">@employee.Role</span>
+                                        </td>
+                                        <td>
+                                            @if (employee.ReviewCount > 0)
+                                            {
+                                                <span class="badge badge-warning">@employee.ReviewCount</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-success">0</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (employee.ObjectiveCount > 0)
+                                            {
+                                                <span class="badge badge-warning">@employee.ObjectiveCount</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-success">0</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (employee.KeyResultCount > 0)
+                                            {
+                                                <span class="badge badge-warning">@employee.KeyResultCount</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-success">0</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (employee.ReviewCount > 0)
+                                            {
+                                                <a href="@Url.Action("DebugEmployeeOKRs", new { email = employee.Email })" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i> View Details
+                                                </a>
+                                                <form method="post" action="@Url.Action("CleanupEmployeeOKRs")" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete ALL OKR data for @employee.FirstName @employee.LastName? This action cannot be undone!');">
+                                                    <input type="hidden" name="employeeId" value="@employee.Id" />
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        <i class="fas fa-trash"></i> Cleanup
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">No OKRs</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <h5><i class="fas fa-info-circle"></i> Instructions</h5>
+                <ul class="mb-0">
+                    <li><strong>Yellow rows</strong> indicate employees who have OKR data that may have been automatically created</li>
+                    <li><strong>Green badges (0)</strong> indicate employees with no OKR data (this is correct for new employees)</li>
+                    <li><strong>Yellow badges</strong> indicate employees with existing OKR data</li>
+                    <li>Use <strong>"View Details"</strong> to see what OKR data exists for an employee</li>
+                    <li>Use <strong>"Cleanup"</strong> to remove all OKR data for an employee (use with caution!)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
