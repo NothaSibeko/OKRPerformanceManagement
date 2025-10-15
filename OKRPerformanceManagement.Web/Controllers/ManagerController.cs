@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OKRPerformanceManagement.Data;
 using OKRPerformanceManagement.Models;
+using OKRPerformanceManagement.Web.ViewModels;
 using System.Security.Claims;
 
 namespace OKRPerformanceManagement.Web.Controllers
@@ -33,7 +34,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             // Get all employees managed by this manager
             var teamMembers = await _context.Employees
-                .Where(e => e.ManagerId == currentEmployee.Id)
+                .Where(e => e.ManagerId == currentEmployee.Id && e.IsActive) // Only show active employees
                 .Include(e => e.RoleEntity)
                 .Include(e => e.PerformanceReviews)
                 .ToListAsync();
@@ -549,7 +550,12 @@ namespace OKRPerformanceManagement.Web.Controllers
                     ReviewPeriodEnd = model.ReviewPeriodEnd,
                     CreatedDate = DateTime.Now,
                     OKRTemplateId = template.Id,
-                    EmployeeSelfAssessment = model.Description
+                    EmployeeSelfAssessment = model.Description ?? "",
+                    ManagerAssessment = "",
+                    FinalAssessment = "",
+                    DiscussionNotes = "",
+                    EmployeeSignature = "",
+                    ManagerSignature = ""
                 };
 
                 _context.PerformanceReviews.Add(performanceReview);
@@ -645,6 +651,38 @@ namespace OKRPerformanceManagement.Web.Controllers
             ViewBag.UserRole = "Manager";
 
             return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteEmployee(int id)
+        {
+            // Get current manager
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentManager == null)
+            {
+                TempData["ErrorMessage"] = "Manager record not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Find the employee to delete
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.Id == id && e.ManagerId == currentManager.Id);
+
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Employee not found or you don't have permission to delete this employee.";
+                return RedirectToAction("Index");
+            }
+
+            // Soft delete - set IsActive to false instead of removing the record
+            employee.IsActive = false;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been deactivated successfully.";
+            return RedirectToAction("Index");
         }
 
     }

@@ -26,6 +26,33 @@
         </div>
     </div>
 
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Statistics Cards -->
     <div class="row mb-4">
@@ -152,6 +179,9 @@
                                             <a href="@Url.Action("ViewOKR", new { id = member.Id })" class="btn btn-sm btn-info">
                                                 <i class="fas fa-clipboard-list"></i> View OKR
                                             </a>
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete(@member.Id, '@member.FirstName', '@member.LastName')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 }
@@ -275,5 +305,23 @@
                 });
             }
         });
+
+        function confirmDelete(employeeId, firstName, lastName) {
+            if (confirm(`Are you sure you want to deactivate ${firstName} ${lastName}? This will make them inactive but preserve their data.`)) {
+                // Create a form and submit it
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '@Url.Action("DeleteEmployee")';
+                
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'id';
+                input.value = employeeId;
+                
+                form.appendChild(input);
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
     </script>
 }

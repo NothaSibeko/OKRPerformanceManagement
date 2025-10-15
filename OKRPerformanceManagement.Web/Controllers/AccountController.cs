@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using OKRPerformanceManagement.Models;
 using OKRPerformanceManagement.Data;
+using OKRPerformanceManagement.Web.ViewModels;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 namespace OKRPerformanceManagement.Web.Controllers
 {
@@ -35,16 +35,11 @@ namespace OKRPerformanceManagement.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
-            Console.WriteLine("=== LOGIN POST ACTION CALLED ===");
             ViewData["ReturnUrl"] = returnUrl;
             model.ReturnUrl = returnUrl ?? "";
             
-            // Add debug logging
-            Console.WriteLine($"Login attempt for email: {model.Email}");
-            
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("ModelState is not valid");
                 ModelState.AddModelError(string.Empty, "Please correct the errors and try again.");
                 return View(model);
             }
@@ -53,54 +48,41 @@ namespace OKRPerformanceManagement.Web.Controllers
             var user = await _userManager.FindByEmailAsync(model.Email);
             if (user == null)
             {
-                Console.WriteLine($"User with email '{model.Email}' not found");
                 ModelState.AddModelError(string.Empty, $"User with email '{model.Email}' does not exist.");
                 return View(model);
             }
 
-            Console.WriteLine($"User found: {user.Email}, ID: {user.Id}");
-
             // Check if user is locked out
             if (await _userManager.IsLockedOutAsync(user))
             {
-                Console.WriteLine("User is locked out");
                 ModelState.AddModelError(string.Empty, "User account is locked out.");
                 return View(model);
             }
 
             // Try to sign in
-            Console.WriteLine("Attempting password sign in...");
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-            
-            Console.WriteLine($"Sign in result: Succeeded={result.Succeeded}, IsLockedOut={result.IsLockedOut}, RequiresTwoFactor={result.RequiresTwoFactor}, IsNotAllowed={result.IsNotAllowed}");
             
             if (result.Succeeded)
             {
-                Console.WriteLine("Login successful, redirecting...");
-                // Redirect to Home for all users
                 return RedirectToLocal(returnUrl);
             }
             else if (result.IsLockedOut)
             {
-                Console.WriteLine("User account is locked out");
                 ModelState.AddModelError(string.Empty, "User account is locked out.");
                 return View(model);
             }
             else if (result.RequiresTwoFactor)
             {
-                Console.WriteLine("Two-factor authentication required");
                 ModelState.AddModelError(string.Empty, "Two-factor authentication is required.");
                 return View(model);
             }
             else if (result.IsNotAllowed)
             {
-                Console.WriteLine("User is not allowed to sign in");
                 ModelState.AddModelError(string.Empty, "Your account is not allowed to sign in. Please contact an administrator.");
                 return View(model);
             }
             else
             {
-                Console.WriteLine("Login failed - invalid password");
                 ModelState.AddModelError(string.Empty, "Invalid password. Please check your password and try again.");
                 return View(model);
             }
@@ -193,15 +175,6 @@ namespace OKRPerformanceManagement.Web.Controllers
             }
         }
 
-        private string GetControllerForRole(string role)
-        {
-            return role switch
-            {
-                "Manager" => "Manager",
-                "Admin" => "Admin",
-                _ => "Employee"
-            };
-        }
 
         [HttpGet]
         public async Task<IActionResult> DebugUsers()
@@ -220,14 +193,6 @@ namespace OKRPerformanceManagement.Web.Controllers
         {
             var users = await _userManager.Users.ToListAsync();
             var employees = await _context.Employees.ToListAsync();
-            
-            // Debug: Print user details to console
-            Console.WriteLine($"Found {users.Count} users in database:");
-            foreach (var user in users)
-            {
-                Console.WriteLine($"- Email: {user.Email}, UserName: {user.UserName}, FirstName: {user.FirstName}, LastName: {user.LastName}");
-                Console.WriteLine($"  EmailConfirmed: {user.EmailConfirmed}, LockoutEnabled: {user.LockoutEnabled}");
-            }
             
             ViewBag.Users = users;
             ViewBag.Employees = employees;
@@ -281,61 +246,5 @@ namespace OKRPerformanceManagement.Web.Controllers
             
             return RedirectToAction("Login");
         }
-    }
-
-    public class LoginViewModel
-    {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
-
-        [Required]
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
-
-        [Display(Name = "Remember me?")]
-        public bool RememberMe { get; set; }
-
-        public string? ReturnUrl { get; set; }
-    }
-
-    public class RegisterViewModel
-    {
-        [Required]
-        [StringLength(100)]
-        [Display(Name = "First Name")]
-        public string FirstName { get; set; }
-
-        [Required]
-        [StringLength(100)]
-        [Display(Name = "Last Name")]
-        public string LastName { get; set; }
-
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email")]
-        public string Email { get; set; }
-
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Password)]
-        [Display(Name = "Password")]
-        public string Password { get; set; }
-
-        [DataType(DataType.Password)]
-        [Display(Name = "Confirm password")]
-        [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
-        public string ConfirmPassword { get; set; }
-
-        [Required]
-        [Display(Name = "Role")]
-        public string Role { get; set; }
-
-        [Required]
-        [Display(Name = "Position")]
-        public string Position { get; set; }
-
-        [Display(Name = "Manager")]
-        public int? ManagerId { get; set; }
     }
 }

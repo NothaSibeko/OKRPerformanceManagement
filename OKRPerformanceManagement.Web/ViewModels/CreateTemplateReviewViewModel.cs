@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using OKRPerformanceManagement.Models;
 
-namespace OKRPerformanceManagement.Models
+namespace OKRPerformanceManagement.Web.ViewModels
 {
     public class CreateTemplateReviewViewModel
     {

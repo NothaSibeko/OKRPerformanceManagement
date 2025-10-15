@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using OKRPerformanceManagement.Data;
 using OKRPerformanceManagement.Models;
 using OKRPerformanceManagement.Web.Services;
-using System.ComponentModel.DataAnnotations;
+using OKRPerformanceManagement.Web.ViewModels;
 using System.Security.Claims;
 
 namespace OKRPerformanceManagement.Web.Controllers
@@ -30,6 +30,7 @@ namespace OKRPerformanceManagement.Web.Controllers
                 .Include(e => e.RoleEntity)
                 .Include(e => e.Manager)
                 .Include(e => e.Subordinates)
+                .Where(e => e.IsActive) // Only show active employees
                 .ToListAsync();
 
             var roles = await _context.EmployeeRoles.ToListAsync();
@@ -200,6 +201,23 @@ namespace OKRPerformanceManagement.Web.Controllers
             ViewBag.Managers = managers;
 
             return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteEmployee(int id)
+        {
+            var employee = await _context.Employees.FindAsync(id);
+            if (employee == null)
+            {
+                return NotFound();
+            }
+
+            // Soft delete - set IsActive to false instead of removing the record
+            employee.IsActive = false;
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been deactivated successfully.";
+            return RedirectToAction("Index");
         }
 
         [HttpGet]
@@ -383,179 +401,8 @@ namespace OKRPerformanceManagement.Web.Controllers
             return View();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> DebugEmployeeOKRs(string email = null)
-        {
-            if (string.IsNullOrEmpty(email))
-            {
-                // Show all employees with their OKR counts
-                var employeesWithOKRs = await _context.Employees
-                    .Select(e => new
-                    {
-                        e.Id,
-                        e.FirstName,
-                        e.LastName,
-                        e.Email,
-                        e.Role,
-                        ReviewCount = _context.PerformanceReviews.Count(pr => pr.EmployeeId == e.Id),
-                        ObjectiveCount = _context.Objectives.Count(o => o.PerformanceReview.EmployeeId == e.Id),
-                        KeyResultCount = _context.KeyResults.Count(kr => kr.Objective.PerformanceReview.EmployeeId == e.Id)
-                    })
-                    .OrderBy(e => e.Email)
-                    .ToListAsync();
 
-                ViewBag.EmployeesWithOKRs = employeesWithOKRs;
-                return View();
-            }
-            else
-            {
-                // Show detailed OKR data for specific employee
-                var employee = await _context.Employees
-                    .FirstOrDefaultAsync(e => e.Email == email);
 
-                if (employee == null)
-                {
-                    TempData["ErrorMessage"] = $"Employee with email '{email}' not found.";
-                    return RedirectToAction("DebugEmployeeOKRs");
-                }
 
-                var reviews = await _context.PerformanceReviews
-                    .Where(pr => pr.EmployeeId == employee.Id)
-                    .Include(pr => pr.Objectives)
-                        .ThenInclude(o => o.KeyResults)
-                    .Include(pr => pr.OKRTemplate)
-                    .Include(pr => pr.Manager)
-                    .ToListAsync();
-
-                ViewBag.Employee = employee;
-                ViewBag.Reviews = reviews;
-                return View("DebugEmployeeOKRsDetail");
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CleanupEmployeeOKRs(int employeeId)
-        {
-            try
-            {
-                var employee = await _context.Employees.FindAsync(employeeId);
-                if (employee == null)
-                {
-                    TempData["ErrorMessage"] = "Employee not found.";
-                    return RedirectToAction("DebugEmployeeOKRs");
-                }
-
-                // Get all reviews for this employee
-                var reviews = await _context.PerformanceReviews
-                    .Where(pr => pr.EmployeeId == employeeId)
-                    .Include(pr => pr.Objectives)
-                        .ThenInclude(o => o.KeyResults)
-                    .ToListAsync();
-
-                // Delete key results first
-                foreach (var review in reviews)
-                {
-                    foreach (var objective in review.Objectives)
-                    {
-                        _context.KeyResults.RemoveRange(objective.KeyResults);
-                    }
-                }
-
-                // Delete objectives
-                foreach (var review in reviews)
-                {
-                    _context.Objectives.RemoveRange(review.Objectives);
-                }
-
-                // Delete performance reviews
-                _context.PerformanceReviews.RemoveRange(reviews);
-
-                await _context.SaveChangesAsync();
-
-                TempData["SuccessMessage"] = $"Successfully cleaned up all OKR data for {employee.FirstName} {employee.LastName} ({employee.Email}).";
-            }
-            catch (Exception ex)
-            {
-                TempData["ErrorMessage"] = $"Error cleaning up OKR data: {ex.Message}";
-            }
-
-            return RedirectToAction("DebugEmployeeOKRs");
-        }
-    }
-
-    public class CreateEmployeeViewModel
-    {
-        [Required]
-        [StringLength(100)]
-        public string FirstName { get; set; }
-
-        [Required]
-        [StringLength(100)]
-        public string LastName { get; set; }
-
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
-
-        [Required]
-        [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
-        [DataType(DataType.Password)]
-        public string Password { get; set; }
-
-        [Required]
-        public string Role { get; set; }
-
-        [Required]
-        public string Position { get; set; }
-
-        public int? ManagerId { get; set; }
-
-        public int? RoleId { get; set; }
-    }
-
-    public class EditEmployeeViewModel
-    {
-        public int Id { get; set; }
-
-        [Required]
-        [StringLength(100)]
-        public string FirstName { get; set; }
-
-        [Required]
-        [StringLength(100)]
-        public string LastName { get; set; }
-
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; }
-
-        [Required]
-        public string Role { get; set; }
-
-        [Required]
-        public string Position { get; set; }
-
-        public int? ManagerId { get; set; }
-
-        public int? RoleId { get; set; }
-
-        public bool IsActive { get; set; }
-    }
-
-    public class CreateOKRTemplateViewModel
-    {
-        [Required]
-        [StringLength(200)]
-        public string Name { get; set; }
-
-        [Required]
-        [StringLength(100)]
-        public string Role { get; set; }
-
-        [Required]
-        [StringLength(500)]
-        public string Description { get; set; }
-
-        public int? RoleId { get; set; }
     }
 }
