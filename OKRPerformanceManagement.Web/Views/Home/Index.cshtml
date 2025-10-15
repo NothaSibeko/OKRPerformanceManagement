@@ -100,58 +100,6 @@ else if (userRole == "Manager")
         </div>
     </div>
     
-    @if (ViewBag.EmployeeCount == 0)
-    {
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="alert alert-info">
-                    <h5><i class="fas fa-info-circle"></i> No Team Members Assigned</h5>
-                    <p>You currently don't have any team members assigned to you. As a manager, you can:</p>
-                    <ul>
-                        <li>Create new employees and assign them to your team</li>
-                        <li>Contact your administrator to assign existing employees to your team</li>
-                        <li>Use the "Create Employee" button below to add team members</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    }
-    else
-    {
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-users"></i> My Team Members</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            @foreach (var member in ViewBag.TeamMembers)
-                            {
-                                <div class="col-md-4 mb-3">
-                                    <div class="card border-left-primary">
-                                        <div class="card-body">
-                                            <div class="d-flex align-items-center">
-                                                <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
-                                                    @member.FirstName.Substring(0, 1)@member.LastName.Substring(0, 1)
-                                                </div>
-                                                <div>
-                                                    <h6 class="mb-0">@member.FirstName @member.LastName</h6>
-                                                    <small class="text-muted">@member.Position</small>
-                                                    <br>
-                                                    <span class="badge badge-info">@member.Role</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
 }
 else
 {

@@ -19,19 +19,6 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-end align-items-center mb-4">
-                <div>
-                    <form method="post" action="@Url.Action("ReSeedOKRTemplates")" style="display: inline;">
-                        <button type="submit" class="btn btn-warning" onclick="return confirm('This will update all OKR templates with the latest structure. Continue?')">
-                            <i class="fas fa-sync-alt"></i> Update OKR Templates
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Success/Error Messages -->
     @if (TempData["SuccessMessage"] != null)
@@ -301,9 +288,16 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 d-flex justify-content-between align-items-center">
                     <h6 class="m-0 font-weight-bold text-primary">OKR Templates</h6>
-                    <a href="@Url.Action("ManageOKRTemplates")" class="btn btn-sm btn-primary">
-                        <i class="fas fa-cog"></i> Manage Templates
-                    </a>
+                    <div>
+                        <form method="post" action="@Url.Action("ReSeedOKRTemplates")" style="display: inline;">
+                            <button type="submit" class="btn btn-sm btn-warning me-2" onclick="return confirm('This will update all OKR templates with the latest structure. Continue?')">
+                                <i class="fas fa-sync-alt"></i> Update Templates
+                            </button>
+                        </form>
+                        <a href="@Url.Action("ManageOKRTemplates")" class="btn btn-sm btn-primary">
+                            <i class="fas fa-cog"></i> Manage Templates
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
