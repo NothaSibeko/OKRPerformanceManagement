@@ -1,0 +1,58 @@
+@{
+    ViewData["Title"] = "User Guide";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">User Guide</h1>
+                <div>
+                    <a href="@Url.Action("Index", "Admin")" class="btn btn-info me-2">
+                        <i class="fas fa-tachometer-alt"></i> Back to Admin Dashboard
+                    </a>
+                    <a href="@Url.Action("ViewProfile")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Getting Started</h6>
+                </div>
+                <div class="card-body">
+                    <h5>Welcome to OKR Performance Management System</h5>
+                    <p>This guide will help you navigate and use the system effectively.</p>
+                    
+                    <h6 class="mt-4">Key Features:</h6>
+                    <ul>
+                        <li><strong>Performance Reviews:</strong> Track and manage your performance reviews</li>
+                        <li><strong>Goal Setting:</strong> Set and track your OKRs (Objectives and Key Results)</li>
+                        <li><strong>Team Management:</strong> Manage your team members (for Managers and Admins)</li>
+                        <li><strong>Role Management:</strong> Manage employee roles (for Admins)</li>
+                    </ul>
+
+                    <h6 class="mt-4">Navigation:</h6>
+                    <ul>
+                        <li>Use the top navigation bar to access different sections</li>
+                        <li>Click on your profile avatar to access profile settings</li>
+                        <li>Use the dashboard to get an overview of your performance</li>
+                    </ul>
+
+                    <h6 class="mt-4">Getting Help:</h6>
+                    <ul>
+                        <li>Contact support for technical issues</li>
+                        <li>Check the FAQ section for common questions</li>
+                        <li>Reach out to your manager for performance-related questions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

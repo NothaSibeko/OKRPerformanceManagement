@@ -1,0 +1,152 @@
+@model OKRPerformanceManagement.Web.ViewModels.EditRoleViewModel
+@{
+    ViewData["Title"] = "Edit Role";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-edit me-2"></i>Edit Role
+                </h1>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Roles
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Role Information</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditRole" method="post">
+                        <input asp-for="Id" type="hidden" />
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Name" class="form-label">Role Name *</label>
+                                    <input asp-for="Name" class="form-control" placeholder="Enter role name" />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="form-check mt-4">
+                                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                        <label asp-for="IsActive" class="form-check-label">
+                                            Active Role
+                                        </label>
+                                    </div>
+                                    <span asp-validation-for="IsActive" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description" class="form-label">Description *</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter role description"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Role
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Role Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Role Name</h6>
+                        <p class="text-muted small">Choose a clear, descriptive name for the role (e.g., "Senior Developer", "Project Manager").</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Description</h6>
+                        <p class="text-muted small">Provide a detailed description of the role's responsibilities and requirements.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Active Status</h6>
+                        <p class="text-muted small">Only active roles can be assigned to new employees.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Confirmation Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="editModalLabel">
+                    <i class="fas fa-user-tag me-2"></i> Confirm Role Update
+                </h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user-tag fa-2x text-primary"></i>
+                    </div>
+                </div>
+                <h6 class="mb-3 text-dark">
+                    Are you sure you want to update the role <strong class="text-primary" id="roleName"></strong>?
+                </h6>
+                <div class="alert alert-info border-0 bg-light">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    <strong>Update Information:</strong> This will modify the role's details in the system.
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary px-4" id="confirmEditBtn">
+                    <i class="fas fa-save me-1"></i> Yes, Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Get role name from the form
+            var roleName = $('#Name').val();
+            $('#roleName').text(roleName);
+        });
+
+        // Override form submission to show modal first
+        $('form').on('submit', function(e) {
+            e.preventDefault();
+            var modal = new bootstrap.Modal(document.getElementById('editModal'));
+            modal.show();
+        });
+
+        $('#confirmEditBtn').click(function() {
+            // Submit the form
+            $('form').off('submit').submit();
+        });
+    </script>
+}

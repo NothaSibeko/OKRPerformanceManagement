@@ -173,6 +173,9 @@
                                         </td>
                                         <td>@DateTime.Now.AddDays(-30).ToString("MMM dd, yyyy")</td>
                                         <td>
+                                            <a href="@Url.Action("EditEmployee", new { id = member.Id })" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
                                             <a href="@Url.Action("ReviewEmployee", new { id = member.Id })" class="btn btn-sm btn-primary">
                                                 <i class="fas fa-eye"></i> Review
                                             </a>
@@ -293,6 +296,41 @@
     }
 </style>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="deleteModalLabel">
+                    <i class="fas fa-user-slash me-2"></i> Confirm Employee Deactivation
+                </h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-danger bg-opacity-10 rounded-circle" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user-times fa-2x text-danger"></i>
+                    </div>
+                </div>
+                <h6 class="mb-3 text-dark">
+                    Are you sure you want to deactivate <strong class="text-danger" id="employeeName"></strong>?
+                </h6>
+                <div class="alert alert-info border-0 bg-light">
+                    <i class="fas fa-shield-alt text-info me-2"></i>
+                    <strong>Safe Operation:</strong> This will make the employee inactive but preserve all their data in the system.
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn">
+                    <i class="fas fa-user-slash me-1"></i> Yes, Deactivate
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script>
         $(document).ready(function() {
@@ -306,8 +344,17 @@
             }
         });
 
+        let employeeToDelete = null;
+
         function confirmDelete(employeeId, firstName, lastName) {
-            if (confirm(`Are you sure you want to deactivate ${firstName} ${lastName}? This will make them inactive but preserve their data.`)) {
+            employeeToDelete = employeeId;
+            $('#employeeName').text(firstName + ' ' + lastName);
+            var modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            modal.show();
+        }
+
+        $('#confirmDeleteBtn').click(function() {
+            if (employeeToDelete) {
                 // Create a form and submit it
                 var form = document.createElement('form');
                 form.method = 'POST';
@@ -316,12 +363,17 @@
                 var input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = 'id';
-                input.value = employeeId;
+                input.value = employeeToDelete;
                 
                 form.appendChild(input);
                 document.body.appendChild(form);
                 form.submit();
             }
-        }
+        });
+
+        // Reset when modal is hidden
+        $('#deleteModal').on('hidden.bs.modal', function() {
+            employeeToDelete = null;
+        });
     </script>
 }

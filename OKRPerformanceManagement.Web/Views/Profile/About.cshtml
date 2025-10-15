@@ -1,0 +1,84 @@
+@model OKRPerformanceManagement.Web.ViewModels.AboutViewModel
+@{
+    ViewData["Title"] = "About";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">About</h1>
+                <div>
+                    <a href="@Url.Action("Index", "Admin")" class="btn btn-info me-2">
+                        <i class="fas fa-tachometer-alt"></i> Back to Admin Dashboard
+                    </a>
+                    <a href="@Url.Action("ViewProfile")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Application Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Application Name</label>
+                                <p class="form-control-plaintext">@Model.ApplicationName</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Version</label>
+                                <p class="form-control-plaintext">@Model.Version</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Build Date</label>
+                                <p class="form-control-plaintext">@Model.BuildDate</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Company</label>
+                                <p class="form-control-plaintext">@Model.Company</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <h6>System Features:</h6>
+                    <ul>
+                        <li>Performance Review Management</li>
+                        <li>OKR (Objectives and Key Results) Tracking</li>
+                        <li>Employee Management</li>
+                        <li>Role-Based Access Control</li>
+                        <li>Real-time Notifications</li>
+                        <li>Data Export Capabilities</li>
+                    </ul>
+                    
+                    <h6 class="mt-4">Technology Stack:</h6>
+                    <ul>
+                        <li>ASP.NET Core MVC</li>
+                        <li>Entity Framework Core</li>
+                        <li>Bootstrap 5</li>
+                        <li>Font Awesome Icons</li>
+                        <li>SQL Server Database</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,93 @@
+@model OKRPerformanceManagement.Web.ViewModels.NotificationsViewModel
+@{
+    ViewData["Title"] = "Notifications";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Notification Settings</h1>
+                <div>
+                    <a href="@Url.Action("ViewProfile")" class="btn btn-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                    <a href="@Url.Action("Index", "Admin")" class="btn btn-info me-2">
+                        <i class="fas fa-tachometer-alt"></i> Back to Admin Dashboard
+                    </a>
+                    <a href="@Url.Action("Settings")" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-cog"></i> General Settings
+                    </a>
+                    <a href="@Url.Action("PrivacySecurity")" class="btn btn-outline-primary">
+                        <i class="fas fa-shield-alt"></i> Privacy & Security
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Notification Preferences</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Notifications" method="post">
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="EmailNotifications" class="form-check-input" />
+                                <label asp-for="EmailNotifications" class="form-check-label">
+                                    <strong>Email Notifications</strong>
+                                    <small class="d-block text-muted">Receive notifications via email</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="PushNotifications" class="form-check-input" />
+                                <label asp-for="PushNotifications" class="form-check-label">
+                                    <strong>Push Notifications</strong>
+                                    <small class="d-block text-muted">Receive browser push notifications</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="ReviewReminders" class="form-check-input" />
+                                <label asp-for="ReviewReminders" class="form-check-label">
+                                    <strong>Review Reminders</strong>
+                                    <small class="d-block text-muted">Get reminded about upcoming performance reviews</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="GoalDeadlines" class="form-check-input" />
+                                <label asp-for="GoalDeadlines" class="form-check-label">
+                                    <strong>Goal Deadlines</strong>
+                                    <small class="d-block text-muted">Get notified about approaching goal deadlines</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="WeeklyReports" class="form-check-input" />
+                                <label asp-for="WeeklyReports" class="form-check-label">
+                                    <strong>Weekly Reports</strong>
+                                    <small class="d-block text-muted">Receive weekly performance summary reports</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Preferences
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

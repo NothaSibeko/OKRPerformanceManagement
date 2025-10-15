@@ -41,3 +41,124 @@ body {
   display: block;
   width: 100%;
 }
+
+/* User Profile Dropdown Styles */
+.user-avatar {
+  transition: transform 0.2s ease-in-out;
+}
+
+.user-avatar:hover {
+  transform: scale(1.1);
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+  border-radius: 0.5rem;
+  min-width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.dropdown-header {
+  padding: 0.75rem 1rem;
+  background-color: #f8f9fa;
+  border-radius: 0.5rem 0.5rem 0 0;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-header:not(:first-child) {
+  background-color: #e9ecef;
+  border-radius: 0;
+  margin-top: 0.5rem;
+}
+
+.dropdown-item {
+  padding: 0.75rem 1rem;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.dropdown-item:hover {
+  background-color: #e9ecef;
+}
+
+.dropdown-item.text-danger:hover {
+  background-color: #f8d7da;
+  color: #721c24 !important;
+}
+
+.navbar-nav .dropdown-toggle::after {
+  margin-left: 0.5rem;
+}
+
+/* Theme Styles */
+[data-theme="dark"] {
+  --bs-body-bg: #1a1a1a;
+  --bs-body-color: #ffffff;
+  --bs-primary: #0d6efd;
+  --bs-secondary: #6c757d;
+  --bs-success: #198754;
+  --bs-danger: #dc3545;
+  --bs-warning: #ffc107;
+  --bs-info: #0dcaf0;
+  --bs-light: #f8f9fa;
+  --bs-dark: #212529;
+}
+
+[data-theme="dark"] body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+}
+
+[data-theme="dark"] .card {
+  background-color: #2d2d2d;
+  border-color: #404040;
+}
+
+[data-theme="dark"] .card-header {
+  background-color: #3d3d3d;
+  border-bottom-color: #404040;
+}
+
+[data-theme="dark"] .table {
+  color: var(--bs-body-color);
+}
+
+[data-theme="dark"] .table-bordered {
+  border-color: #404040;
+}
+
+[data-theme="dark"] .form-control {
+  background-color: #3d3d3d;
+  border-color: #404040;
+  color: var(--bs-body-color);
+}
+
+[data-theme="dark"] .form-control:focus {
+  background-color: #3d3d3d;
+  border-color: var(--bs-primary);
+  color: var(--bs-body-color);
+}
+
+[data-theme="dark"] .dropdown-menu {
+  background-color: #2d2d2d;
+  border-color: #404040;
+}
+
+[data-theme="dark"] .dropdown-item {
+  color: var(--bs-body-color);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+  background-color: #404040;
+  color: var(--bs-body-color);
+}
+
+[data-theme="dark"] .dropdown-header {
+  background-color: #3d3d3d;
+  color: var(--bs-body-color);
+}

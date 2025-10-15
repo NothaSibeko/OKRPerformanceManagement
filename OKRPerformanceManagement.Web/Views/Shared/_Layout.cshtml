@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - OKR Performance Management</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
@@ -52,13 +53,117 @@
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
-                            <li class="nav-item">
-                                <span class="navbar-text text-light me-3">Welcome, @User.Identity.Name!</span>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center text-light" href="#" id="userProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="user-avatar">
+                                        <i class="fas fa-user-circle fa-2x text-light"></i>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userProfileDropdown">
+                                    <li class="dropdown-header">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user-circle fa-3x text-primary me-3"></i>
+                                            <div>
+                                                <h6 class="mb-0">@User.Identity.Name</h6>
+                                                <small class="text-muted">@(ViewBag.UserRole ?? "Employee")</small>
+                                                <div class="mt-1">
+                                                    <span class="badge bg-success">Online</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    
+                                    <!-- Profile Section -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-user me-2"></i>Profile
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("ViewProfile", "Profile")">
+                                            <i class="fas fa-id-card me-2"></i>View Profile
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("EditProfile", "Profile")">
+                                            <i class="fas fa-edit me-2"></i>Edit Profile
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("ChangePassword", "Profile")">
+                                            <i class="fas fa-key me-2"></i>Change Password
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("PerformanceHistory", "Profile")">
+                                            <i class="fas fa-calendar-alt me-2"></i>Performance History
+                                        </a>
+                                    </li>
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    
+                                    <!-- Settings Section -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-cog me-2"></i>Settings
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Notifications", "Profile")">
+                                            <i class="fas fa-bell me-2"></i>Notifications
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Settings", "Profile")">
+                                            <i class="fas fa-palette me-2"></i>Theme & Appearance
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("Settings", "Profile")">
+                                            <i class="fas fa-language me-2"></i>Language & Region
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("PrivacySecurity", "Profile")">
+                                            <i class="fas fa-shield-alt me-2"></i>Privacy & Security
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("ExportData", "Profile")">
+                                            <i class="fas fa-download me-2"></i>Export Data
+                                        </a>
+                                    </li>
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    
+                                    <!-- Help & Support -->
+                                    <li class="dropdown-header">
+                                        <i class="fas fa-question-circle me-2"></i>Help & Support
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("UserGuide", "Profile")">
+                                            <i class="fas fa-book me-2"></i>User Guide
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("ContactSupport", "Profile")">
+                                            <i class="fas fa-headset me-2"></i>Contact Support
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="@Url.Action("About", "Profile")">
+                                            <i class="fas fa-info-circle me-2"></i>About
+                                        </a>
                             </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-link nav-link text-light">Logout</button>
+                                    
+                                    <li><hr class="dropdown-divider"></li>
+                                    
+                                    <!-- Logout -->
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline w-100">
+                                            <button type="submit" class="dropdown-item text-danger">
+                                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                            </button>
                                 </form>
+                                    </li>
+                                </ul>
                             </li>
                         }
                         else
@@ -125,6 +230,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        // Theme functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Update theme selector if it exists
+            const themeSelect = document.querySelector('select[name="Theme"]');
+            if (themeSelect) {
+                themeSelect.value = savedTheme;
+                
+                // Add change event listener
+                themeSelect.addEventListener('change', function() {
+                    const newTheme = this.value;
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+            }
+        });
+    </script>
     
     <script>
         $(document).ready(function() {

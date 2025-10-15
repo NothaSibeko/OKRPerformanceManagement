@@ -1,0 +1,95 @@
+@model OKRPerformanceManagement.Web.ViewModels.CreateRoleViewModel
+@{
+    ViewData["Title"] = "Create Role";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-plus-circle me-2"></i>Create New Role
+                </h1>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Roles
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Role Information</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateRole" method="post">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label asp-for="Name" class="form-label">Role Name *</label>
+                                    <input asp-for="Name" class="form-control" placeholder="Enter role name" />
+                                    <span asp-validation-for="Name" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="form-check mt-4">
+                                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                        <label asp-for="IsActive" class="form-check-label">
+                                            Active Role
+                                        </label>
+                                    </div>
+                                    <span asp-validation-for="IsActive" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Description" class="form-label">Description *</label>
+                            <textarea asp-for="Description" class="form-control" rows="4" placeholder="Enter role description"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Role
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Role Guidelines</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Role Name</h6>
+                        <p class="text-muted small">Choose a clear, descriptive name for the role (e.g., "Senior Developer", "Project Manager").</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Description</h6>
+                        <p class="text-muted small">Provide a detailed description of the role's responsibilities and requirements.</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Active Status</h6>
+                        <p class="text-muted small">Only active roles can be assigned to new employees.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

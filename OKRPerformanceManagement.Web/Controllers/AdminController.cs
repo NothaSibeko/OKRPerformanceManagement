@@ -220,43 +220,130 @@ namespace OKRPerformanceManagement.Web.Controllers
             return RedirectToAction("Index");
         }
 
+        // Role Management Actions
+            
         [HttpGet]
-        public async Task<IActionResult> ManageRoles()
+        public IActionResult CreateRole()
         {
-            var employeeRoles = await _context.EmployeeRoles.ToListAsync();
-            var identityRoles = await _context.Roles.ToListAsync();
-            
-            ViewBag.EmployeeRoles = employeeRoles;
-            ViewBag.IdentityRoles = identityRoles;
-            
             return View();
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateRole(string name, string description, bool isActive = true)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateRole(CreateRoleViewModel model)
         {
-            if (!string.IsNullOrEmpty(name))
+            if (ModelState.IsValid)
             {
+                // Check if role name already exists
+                var existingRole = await _context.EmployeeRoles
+                    .FirstOrDefaultAsync(r => r.Name.ToLower() == model.Name.ToLower());
+
+                if (existingRole != null)
+                {
+                    ModelState.AddModelError("Name", "A role with this name already exists.");
+                    return View(model);
+                }
+
                 var role = new EmployeeRole
                 {
-                    Name = name,
-                    Description = description,
-                    IsActive = isActive,
+                    Name = model.Name,
+                    Description = model.Description,
+                    IsActive = model.IsActive,
                     CreatedDate = DateTime.Now
                 };
 
                 _context.EmployeeRoles.Add(role);
                 await _context.SaveChangesAsync();
                 
-                TempData["SuccessMessage"] = $"Role '{name}' created successfully.";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Role name is required.";
+                TempData["SuccessMessage"] = $"Role '{role.Name}' has been created successfully.";
+                return RedirectToAction("Index");
             }
 
-            return RedirectToAction("ManageRoles");
+            return View(model);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> EditRole(int id)
+        {
+            var role = await _context.EmployeeRoles.FindAsync(id);
+            if (role == null)
+            {
+                return NotFound();
+            }
+
+            var model = new EditRoleViewModel
+            {
+                Id = role.Id,
+                Name = role.Name,
+                Description = role.Description,
+                IsActive = role.IsActive
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditRole(EditRoleViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var role = await _context.EmployeeRoles.FindAsync(model.Id);
+                if (role == null)
+                {
+                    return NotFound();
+                }
+
+                // Check if role name already exists (excluding current role)
+                var existingRole = await _context.EmployeeRoles
+                    .FirstOrDefaultAsync(r => r.Name.ToLower() == model.Name.ToLower() && r.Id != model.Id);
+
+                if (existingRole != null)
+                {
+                    ModelState.AddModelError("Name", "A role with this name already exists.");
+                    return View(model);
+                }
+
+                role.Name = model.Name;
+                role.Description = model.Description;
+                role.IsActive = model.IsActive;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Role '{role.Name}' has been updated successfully.";
+                return RedirectToAction("Index");
+            }
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteRole(int id)
+        {
+            var role = await _context.EmployeeRoles.FindAsync(id);
+            if (role == null)
+            {
+                return NotFound();
+            }
+
+            // Check if role is being used by any employees
+            var employeesUsingRole = await _context.Employees
+                .AnyAsync(e => e.RoleId == id);
+
+            if (employeesUsingRole)
+            {
+                TempData["ErrorMessage"] = $"Cannot delete role '{role.Name}' because it is currently assigned to employees.";
+                return RedirectToAction("Index");
+            }
+
+            _context.EmployeeRoles.Remove(role);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Role '{role.Name}' has been deleted successfully.";
+            return RedirectToAction("Index");
+        }
+
+
 
         [HttpGet]
         public async Task<IActionResult> ManageOKRTemplates()

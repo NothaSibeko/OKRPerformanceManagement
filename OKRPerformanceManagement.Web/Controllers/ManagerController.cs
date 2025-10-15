@@ -653,6 +653,108 @@ namespace OKRPerformanceManagement.Web.Controllers
             return View();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> EditEmployee(int id)
+        {
+            // Get current manager
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentManager == null)
+            {
+                TempData["ErrorMessage"] = "Manager record not found.";
+                return RedirectToAction("Index");
+            }
+
+            // Find the employee to edit (must be managed by current manager)
+            var employee = await _context.Employees
+                .Include(e => e.RoleEntity)
+                .FirstOrDefaultAsync(e => e.Id == id && e.ManagerId == currentManager.Id);
+
+            if (employee == null)
+            {
+                TempData["ErrorMessage"] = "Employee not found or you don't have permission to edit this employee.";
+                return RedirectToAction("Index");
+            }
+
+            var roles = await _context.EmployeeRoles.Where(r => r.IsActive).ToListAsync();
+            var managers = await _context.Employees
+                .Where(e => e.Role == "Manager" && e.Id != id)
+                .ToListAsync();
+
+            ViewBag.Roles = roles;
+            ViewBag.Managers = managers;
+
+            var model = new EditEmployeeViewModel
+            {
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Email = employee.Email,
+                Role = employee.Role,
+                Position = employee.Position,
+                ManagerId = employee.ManagerId,
+                RoleId = employee.RoleId,
+                IsActive = employee.IsActive
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditEmployee(EditEmployeeViewModel model)
+        {
+            // Get current manager
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentManager == null)
+            {
+                TempData["ErrorMessage"] = "Manager record not found.";
+                return RedirectToAction("Index");
+            }
+
+            if (ModelState.IsValid)
+            {
+                // Find the employee to edit (must be managed by current manager)
+                var employee = await _context.Employees
+                    .FirstOrDefaultAsync(e => e.Id == model.Id && e.ManagerId == currentManager.Id);
+
+                if (employee == null)
+                {
+                    TempData["ErrorMessage"] = "Employee not found or you don't have permission to edit this employee.";
+                    return RedirectToAction("Index");
+                }
+
+                employee.FirstName = model.FirstName;
+                employee.LastName = model.LastName;
+                employee.Email = model.Email;
+                employee.Role = model.Role;
+                employee.Position = model.Position;
+                employee.ManagerId = model.ManagerId == 0 ? null : model.ManagerId;
+                employee.RoleId = model.RoleId;
+                employee.IsActive = model.IsActive;
+
+                await _context.SaveChangesAsync();
+
+                TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been updated successfully.";
+                return RedirectToAction("Index");
+            }
+
+            // If we get here, there was an error - repopulate dropdowns
+            var roles = await _context.EmployeeRoles.Where(r => r.IsActive).ToListAsync();
+            var managers = await _context.Employees
+                .Where(e => e.Role == "Manager" && e.Id != model.Id)
+                .ToListAsync();
+
+            ViewBag.Roles = roles;
+            ViewBag.Managers = managers;
+
+            return View(model);
+        }
+
         [HttpPost]
         public async Task<IActionResult> DeleteEmployee(int id)
         {

@@ -1,0 +1,83 @@
+@model OKRPerformanceManagement.Web.ViewModels.PrivacySecurityViewModel
+@{
+    ViewData["Title"] = "Privacy & Security";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Privacy & Security</h1>
+                <div>
+                    <a href="@Url.Action("ViewProfile")" class="btn btn-secondary me-2">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                    <a href="@Url.Action("Index", "Admin")" class="btn btn-info me-2">
+                        <i class="fas fa-tachometer-alt"></i> Back to Admin Dashboard
+                    </a>
+                    <a href="@Url.Action("Settings")" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-cog"></i> General Settings
+                    </a>
+                    <a href="@Url.Action("Notifications")" class="btn btn-outline-primary">
+                        <i class="fas fa-bell"></i> Notifications
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Security Settings</h6>
+                </div>
+                <div class="card-body">
+                    <form asp-action="PrivacySecurity" method="post">
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="TwoFactorEnabled" class="form-check-input" />
+                                <label asp-for="TwoFactorEnabled" class="form-check-label">
+                                    <strong>Two-Factor Authentication</strong>
+                                    <small class="d-block text-muted">Add an extra layer of security to your account</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="LoginAlerts" class="form-check-input" />
+                                <label asp-for="LoginAlerts" class="form-check-label">
+                                    <strong>Login Alerts</strong>
+                                    <small class="d-block text-muted">Get notified when someone logs into your account</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label asp-for="ProfileVisibility" class="form-label"></label>
+                            <select asp-for="ProfileVisibility" class="form-select">
+                                <option value="Public">Public - Visible to everyone</option>
+                                <option value="Private">Private - Only visible to you</option>
+                                <option value="Team">Team - Visible to team members only</option>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input asp-for="DataSharing" class="form-check-input" />
+                                <label asp-for="DataSharing" class="form-check-label">
+                                    <strong>Data Sharing</strong>
+                                    <small class="d-block text-muted">Allow sharing of anonymized data for system improvements</small>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
