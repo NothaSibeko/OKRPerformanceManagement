@@ -74,7 +74,7 @@ namespace OKRPerformanceManagement.Web.Controllers
                 ViewBag.KeyResultCount = await _context.KeyResults
                     .CountAsync(kr => teamMemberIds.Contains(kr.Objective.PerformanceReview.EmployeeId));
                 ViewBag.PendingReviews = await _context.PerformanceReviews
-                    .CountAsync(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Employee_Review");
+                    .CountAsync(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Manager_Review");
                 ViewBag.CompletedReviews = await _context.PerformanceReviews
                     .CountAsync(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Completed");
                 ViewBag.TeamMembers = teamMembers;
@@ -92,7 +92,8 @@ namespace OKRPerformanceManagement.Web.Controllers
                     ViewBag.KeyResultCount = await _context.KeyResults
                         .CountAsync(kr => kr.Objective.PerformanceReview.EmployeeId == currentEmployee.Id);
                     ViewBag.MyActiveReviews = await _context.PerformanceReviews
-                        .Where(pr => pr.EmployeeId == currentEmployee.Id && pr.Status != "Completed")
+                        .Where(pr => pr.EmployeeId == currentEmployee.Id && 
+                            (pr.Status == "Draft" || pr.Status == "Employee_Review"))
                         .ToListAsync();
                 }
                 else

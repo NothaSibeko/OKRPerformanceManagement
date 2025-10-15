@@ -1,0 +1,220 @@
+@model OKRPerformanceManagement.Models.PerformanceReview
+@{
+    ViewData["Title"] = "Manager Review";
+    var review = ViewBag.Review as OKRPerformanceManagement.Models.PerformanceReview;
+    var currentManager = ViewBag.CurrentManager as OKRPerformanceManagement.Models.Employee;
+}
+
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Manager Review</h1>
+        <div>
+            <a href="@Url.Action("PendingReviews")" class="btn btn-outline-primary me-2">
+                <i class="fas fa-list"></i> Back to Pending Reviews
+            </a>
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>@TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Review Details</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Employee:</strong> @review?.Employee?.FirstName @review?.Employee?.LastName</p>
+                            <p><strong>Review Period:</strong> @review?.ReviewPeriodStart.ToString("MMM dd, yyyy") - @review?.ReviewPeriodEnd.ToString("MMM dd, yyyy")</p>
+                            <p><strong>Created Date:</strong> @review?.CreatedDate.ToString("MMM dd, yyyy")</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Manager:</strong> @currentManager?.FirstName @currentManager?.LastName</p>
+                            <p><strong>Status:</strong> 
+                                <span class="badge bg-warning">@review?.Status</span>
+                            </p>
+                            <p><strong>Template:</strong> @review?.OKRTemplate?.Name</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="ManagerReview" method="post">
+        <input type="hidden" name="id" value="@review?.Id" />
+        
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Objectives and Key Results</h6>
+                    </div>
+                    <div class="card-body">
+                        @if (review?.Objectives != null && review.Objectives.Any())
+                        {
+                            @foreach (var objective in review.Objectives)
+                            {
+                                <div class="mb-4">
+                                    <h5 class="text-primary">@objective.Name</h5>
+                                    <p class="text-muted">@objective.Description</p>
+                                    
+                                    @if (objective.KeyResults != null && objective.KeyResults.Any())
+                                    {
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Key Result</th>
+                                                        <th>Target</th>
+                                                        <th>Employee Rating</th>
+                                                        <th>Employee Comments</th>
+                                                        <th>Manager Rating</th>
+                                                        <th>Manager Comments</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var keyResult in objective.KeyResults)
+                                                    {
+                                                        <tr>
+                                                            <td>@keyResult.Name</td>
+                                                            <td>@keyResult.Target</td>
+                                                            <td>
+                                                                @if (keyResult.EmployeeRating.HasValue)
+                                                                {
+                                                                    <span class="badge bg-info">@keyResult.EmployeeRating/5</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="text-muted">Not rated</span>
+                                                                }
+                                                            </td>
+                                                            <td>@keyResult.EmployeeComments</td>
+                                                            <td>
+                                                                <select name="managerRatings[@keyResult.Id]" class="form-select form-select-sm">
+                                                                    <option value="">Select Rating</option>
+                                                                    <option value="1" selected="@(keyResult.ManagerRating == 1)">1 - Needs Improvement</option>
+                                                                    <option value="2" selected="@(keyResult.ManagerRating == 2)">2 - Below Expectations</option>
+                                                                    <option value="3" selected="@(keyResult.ManagerRating == 3)">3 - Meets Expectations</option>
+                                                                    <option value="4" selected="@(keyResult.ManagerRating == 4)">4 - Exceeds Expectations</option>
+                                                                    <option value="5" selected="@(keyResult.ManagerRating == 5)">5 - Outstanding</option>
+                                                                </select>
+                                                            </td>
+                                                            <td>
+                                                                <textarea name="managerComments[@keyResult.Id]" class="form-control form-control-sm" rows="2" placeholder="Manager comments...">@keyResult.ManagerComments</textarea>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-muted">No objectives found for this review.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Employee Self Assessment</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Employee's Self Assessment:</label>
+                            <div class="form-control-plaintext bg-light p-3">
+                                @if (!string.IsNullOrEmpty(review?.EmployeeSelfAssessment))
+                                {
+                                    @review.EmployeeSelfAssessment
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No self assessment provided by employee.</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Manager Assessment</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label for="overallRating" class="form-label">Overall Rating:</label>
+                            <select name="overallRating" id="overallRating" class="form-select">
+                                <option value="">Select Overall Rating</option>
+                                <option value="1" selected="@(review?.OverallRating == 1)">1 - Needs Improvement</option>
+                                <option value="2" selected="@(review?.OverallRating == 2)">2 - Below Expectations</option>
+                                <option value="3" selected="@(review?.OverallRating == 3)">3 - Meets Expectations</option>
+                                <option value="4" selected="@(review?.OverallRating == 4)">4 - Exceeds Expectations</option>
+                                <option value="5" selected="@(review?.OverallRating == 5)">5 - Outstanding</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="managerAssessment" class="form-label">Manager Assessment:</label>
+                            <textarea name="managerAssessment" id="managerAssessment" class="form-control" rows="6" placeholder="Provide your assessment of the employee's performance...">@review?.ManagerAssessment</textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" name="action" value="save" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Save Review
+                                </button>
+                            </div>
+                            <div>
+                                <button type="submit" name="action" value="schedule_discussion" class="btn btn-warning me-2">
+                                    <i class="fas fa-calendar-alt"></i> Schedule Discussion
+                                </button>
+                                <button type="submit" name="action" value="finalize" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Finalize Review
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

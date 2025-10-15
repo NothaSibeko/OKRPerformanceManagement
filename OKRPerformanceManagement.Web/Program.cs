@@ -50,6 +50,9 @@ builder.Services.AddSession(options =>
 // Add seed data service
 builder.Services.AddScoped<SeedDataService>();
 
+// Add notification service
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

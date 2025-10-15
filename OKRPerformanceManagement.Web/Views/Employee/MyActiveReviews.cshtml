@@ -1,0 +1,167 @@
+@model IEnumerable<OKRPerformanceManagement.Models.PerformanceReview>
+@{
+    ViewData["Title"] = "My Active Reviews";
+    var currentEmployee = ViewBag.CurrentEmployee as OKRPerformanceManagement.Models.Employee;
+    var activeReviews = ViewBag.ActiveReviews as List<OKRPerformanceManagement.Models.PerformanceReview>;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">My Active Reviews</h1>
+                <div>
+                    <a href="@Url.Action("MyPerformanceHistory")" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-history"></i> View Completed Reviews
+                    </a>
+                    <a href="@Url.Action("Index", "Home")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+
+            @if (activeReviews != null && activeReviews.Any())
+            {
+                <div class="alert alert-info mb-4">
+                    <h6><i class="fas fa-info-circle"></i> Understanding Your Active Reviews</h6>
+                    <p class="mb-2"><strong>Draft/Employee Review:</strong> You can complete and submit your review.</p>
+                    <p class="mb-2"><strong>Manager Review:</strong> Your manager is reviewing your submitted review.</p>
+                    <p class="mb-0"><strong>Discussion:</strong> You and your manager are discussing the review.</p>
+                </div>
+                
+                <div class="row">
+                    @foreach (var review in activeReviews)
+                    {
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        @(review.OKRTemplate?.Name ?? "Performance Review")
+                                    </h6>
+                                    <span class="badge badge-@(review.Status switch {
+                                        "Draft" => "secondary",
+                                        "Employee_Review" => "warning", 
+                                        "Manager_Review" => "info",
+                                        _ => "light"
+                                    })">
+                                        @review.Status.Replace("_", " ")
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <p class="text-muted mb-1">Review Period:</p>
+                                            <p class="mb-2">
+                                                <strong>@review.ReviewPeriodStart.ToString("MMM dd, yyyy")</strong> - 
+                                                <strong>@review.ReviewPeriodEnd.ToString("MMM dd, yyyy")</strong>
+                                            </p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="text-muted mb-1">Manager:</p>
+                                            <p class="mb-2"><strong>@review.Manager?.FirstName @review.Manager?.LastName</strong></p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-sm-6">
+                                            <p class="text-muted mb-1">Created:</p>
+                                            <p class="mb-2"><strong>@review.CreatedDate.ToString("MMM dd, yyyy")</strong></p>
+                                        </div>
+                                        <div class="col-sm-6">
+                                            <p class="text-muted mb-1">Objectives:</p>
+                                            <p class="mb-2"><strong>@review.Objectives?.Count ?? 0</strong></p>
+                                        </div>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(review.EmployeeSelfAssessment))
+                                    {
+                                        <div class="mt-3">
+                                            <p class="text-muted mb-1">Your Assessment:</p>
+                                            <p class="text-truncate" style="max-height: 60px; overflow: hidden;">
+                                                @review.EmployeeSelfAssessment
+                                            </p>
+                                        </div>
+                                    }
+                                    
+                                    <div class="mt-3">
+                                        <p class="text-muted mb-1">Current Status:</p>
+                                        @if (review.Status == "Manager_Review")
+                                        {
+                                            <p class="text-info small"><i class="fas fa-clock"></i> Your manager is reviewing your submitted review.</p>
+                                        }
+                                        else if (review.Status == "Draft")
+                                        {
+                                            <p class="text-warning small"><i class="fas fa-edit"></i> Ready for you to complete and submit.</p>
+                                        }
+                                        else if (review.Status == "Employee_Review")
+                                        {
+                                            <p class="text-primary small"><i class="fas fa-user-edit"></i> You can still make changes before submitting.</p>
+                                        }
+                                        else if (review.Status == "Discussion")
+                                        {
+                                            <p class="text-secondary small"><i class="fas fa-comments"></i> You and your manager are discussing the review.</p>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="@Url.Action("ReviewDetails", new { id = review.Id })" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </a>
+                                        
+                                        @if (review.Status == "Draft" || review.Status == "Employee_Review")
+                                        {
+                                            <a href="@Url.Action("EditOKR", new { id = review.Id })" class="btn btn-success btn-sm">
+                                                <i class="fas fa-edit"></i> Complete Review
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="@Url.Action("ReviewDetails", new { id = review.Id })" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-clipboard-check"></i> View Review Status
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-check-circle fa-4x text-success"></i>
+                    </div>
+                    <h4 class="text-success">All Caught Up!</h4>
+                    <p class="text-muted">You don't have any reviews that need your attention right now.</p>
+                    <p class="text-muted">Any submitted reviews are being reviewed by your manager.</p>
+                    <div class="mt-4">
+                        <a href="@Url.Action("MyPerformanceHistory")" class="btn btn-primary me-2">
+                            <i class="fas fa-history"></i> View Completed Reviews
+                        </a>
+                        <a href="@Url.Action("MyOKRs")" class="btn btn-info">
+                            <i class="fas fa-list"></i> View All OKRs
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        transition: transform 0.2s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+    }
+</style>

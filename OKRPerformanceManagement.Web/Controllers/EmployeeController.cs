@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OKRPerformanceManagement.Data;
 using OKRPerformanceManagement.Models;
+using OKRPerformanceManagement.Web.Services;
 using System.Security.Claims;
 
 namespace OKRPerformanceManagement.Web.Controllers
@@ -17,10 +18,12 @@ namespace OKRPerformanceManagement.Web.Controllers
     public class EmployeeController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public EmployeeController(ApplicationDbContext context)
+        public EmployeeController(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
 
@@ -96,7 +99,24 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("ReviewDetails", new { id });
+            // Send notification to manager
+            if (review.Manager?.UserId != null)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    userId: review.Manager.UserId,
+                    senderId: currentUserId,
+                    title: "Performance Review Submitted",
+                    message: $"{currentEmployee.FirstName} {currentEmployee.LastName} has submitted their performance review for your review.",
+                    type: "Review_Submitted",
+                    actionUrl: $"/Manager/ReviewDetails/{id}",
+                    relatedEntityId: id,
+                    relatedEntityType: "PerformanceReview"
+                );
+            }
+
+            TempData["SuccessMessage"] = "Your performance review has been submitted successfully! Your manager will be notified.";
+
+            return RedirectToAction("MyActiveReviews");
         }
 
         [HttpPost]
@@ -125,7 +145,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("ReviewDetails", new { id });
+            return RedirectToAction("MyActiveReviews");
         }
 
         [HttpGet]
@@ -149,6 +169,36 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             ViewBag.CurrentEmployee = currentEmployee;
             ViewBag.CompletedReviews = completedReviews;
+            ViewBag.UserRole = "Employee";
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyActiveReviews()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Employee record not found.");
+            }
+
+            // Get active reviews (only Draft and Employee_Review - reviews the employee can work on)
+            var activeReviews = await _context.PerformanceReviews
+                .Where(pr => pr.EmployeeId == currentEmployee.Id && 
+                    (pr.Status == "Draft" || pr.Status == "Employee_Review"))
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.OKRTemplate)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .OrderByDescending(pr => pr.CreatedDate)
+                .ToListAsync();
+
+            ViewBag.CurrentEmployee = currentEmployee;
+            ViewBag.ActiveReviews = activeReviews;
             ViewBag.UserRole = "Employee";
 
             return View();
@@ -316,7 +366,23 @@ namespace OKRPerformanceManagement.Web.Controllers
             {
                 review.Status = "Manager_Review";
                 review.SubmittedDate = DateTime.Now;
-                TempData["SuccessMessage"] = "OKR submitted for manager review successfully!";
+                
+                // Send notification to manager
+                if (review.Manager?.UserId != null)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        userId: review.Manager.UserId,
+                        senderId: currentUserId,
+                        title: "Performance Review Submitted",
+                        message: $"{currentEmployee.FirstName} {currentEmployee.LastName} has submitted their performance review for your review.",
+                        type: "Review_Submitted",
+                        actionUrl: $"/Manager/ReviewDetails/{id}",
+                        relatedEntityId: id,
+                        relatedEntityType: "PerformanceReview"
+                    );
+                }
+                
+                TempData["SuccessMessage"] = "OKR submitted for manager review successfully! Your manager will be notified.";
             }
             else
             {
@@ -325,7 +391,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("ViewOKR", new { id = review.Id });
+            return RedirectToAction("MyActiveReviews");
         }
 
         [HttpGet]

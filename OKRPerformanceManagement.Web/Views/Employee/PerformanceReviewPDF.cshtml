@@ -1,0 +1,317 @@
+@model OKRPerformanceManagement.Models.PerformanceReview
+@{
+    ViewData["Title"] = "Performance Review - " + Model.Employee.FirstName + " " + Model.Employee.LastName;
+    Layout = null; // No layout for PDF printing
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"]</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #007bff;
+            margin: 0;
+        }
+        .header h2 {
+            color: #666;
+            margin: 10px 0 0 0;
+            font-weight: normal;
+        }
+        .info-section {
+            margin-bottom: 30px;
+        }
+        .info-section h3 {
+            color: #007bff;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            margin-bottom: 10px;
+        }
+        .info-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .objective {
+            margin-bottom: 25px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+        }
+        .objective h4 {
+            color: #007bff;
+            margin: 0 0 10px 0;
+        }
+        .objective p {
+            margin: 0 0 15px 0;
+            color: #666;
+        }
+        .key-result {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+        }
+        .key-result h5 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        .key-result-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .rating {
+            font-weight: bold;
+        }
+        .rating.employee { color: #28a745; }
+        .rating.manager { color: #007bff; }
+        .assessment {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .assessment h4 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .signature-section {
+            margin-top: 40px;
+            border-top: 2px solid #ddd;
+            padding-top: 20px;
+        }
+        .signature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+        }
+        .signature-box {
+            border: 1px solid #ddd;
+            height: 80px;
+            padding: 10px;
+        }
+        .signature-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .date {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .status-completed { background-color: #d4edda; color: #155724; }
+        .status-signed { background-color: #d1ecf1; color: #0c5460; }
+        .status-discussion { background-color: #fff3cd; color: #856404; }
+        .status-manager-review { background-color: #f8d7da; color: #721c24; }
+        .status-employee-review { background-color: #d1ecf1; color: #0c5460; }
+        .status-draft { background-color: #e2e3e5; color: #383d41; }
+        @@media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Performance Review</h1>
+        <h2>@Model.Employee.FirstName @Model.Employee.LastName</h2>
+        <p class="date">Review Period: @Model.ReviewPeriodStart.ToString("MMM dd, yyyy") - @Model.ReviewPeriodEnd.ToString("MMM dd, yyyy")</p>
+    </div>
+
+    <div class="info-section">
+        <h3>Review Information</h3>
+        <div class="info-grid">
+            <div>
+                <div class="info-item">
+                    <span class="info-label">Employee:</span> @Model.Employee.FirstName @Model.Employee.LastName
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Position:</span> @Model.Employee.Position
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Department:</span> @Model.Employee.Role
+                </div>
+            </div>
+            <div>
+                <div class="info-item">
+                    <span class="info-label">Manager:</span> @Model.Manager.FirstName @Model.Manager.LastName
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Review Date:</span> @Model.CreatedDate.ToString("MMM dd, yyyy")
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span> 
+                    <span class="status-badge status-@Model.Status.ToLower().Replace("_", "-")">@Model.Status</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (Model.Objectives != null && Model.Objectives.Any())
+    {
+        <div class="info-section">
+            <h3>Objectives and Key Results</h3>
+            @foreach (var objective in Model.Objectives.OrderBy(o => o.SortOrder))
+            {
+                <div class="objective">
+                    <h4>@objective.Name</h4>
+                    <p>@objective.Description</p>
+                    
+                    @if (objective.KeyResults != null && objective.KeyResults.Any())
+                    {
+                        @foreach (var keyResult in objective.KeyResults.OrderBy(kr => kr.SortOrder))
+                        {
+                            <div class="key-result">
+                                <h5>@keyResult.Name</h5>
+                                <p><strong>Target:</strong> @keyResult.Target</p>
+                                
+                                <div class="key-result-details">
+                                    <div>
+                                        <strong>Employee Rating:</strong>
+                                        @if (keyResult.EmployeeRating.HasValue)
+                                        {
+                                            <span class="rating employee">@keyResult.EmployeeRating/5</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Not rated</span>
+                                        }
+                                    </div>
+                                    <div>
+                                        <strong>Manager Rating:</strong>
+                                        @if (keyResult.ManagerRating.HasValue)
+                                        {
+                                            <span class="rating manager">@keyResult.ManagerRating/5</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Not rated</span>
+                                        }
+                                    </div>
+                                    <div>
+                                        <strong>Final Rating:</strong>
+                                        @if (keyResult.FinalRating.HasValue)
+                                        {
+                                            <span class="rating">@keyResult.FinalRating/5</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Not finalized</span>
+                                        }
+                                    </div>
+                                </div>
+                                
+                                @if (!string.IsNullOrEmpty(keyResult.EmployeeComments))
+                                {
+                                    <p><strong>Employee Comments:</strong> @keyResult.EmployeeComments</p>
+                                }
+                                
+                                @if (!string.IsNullOrEmpty(keyResult.ManagerComments))
+                                {
+                                    <p><strong>Manager Comments:</strong> @keyResult.ManagerComments</p>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.EmployeeSelfAssessment))
+    {
+        <div class="assessment">
+            <h4>Employee Self Assessment</h4>
+            <p>@Model.EmployeeSelfAssessment</p>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ManagerAssessment))
+    {
+        <div class="assessment">
+            <h4>Manager Assessment</h4>
+            <p>@Model.ManagerAssessment</p>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.FinalAssessment))
+    {
+        <div class="assessment">
+            <h4>Final Assessment</h4>
+            <p>@Model.FinalAssessment</p>
+        </div>
+    }
+
+    @if (Model.OverallRating.HasValue)
+    {
+        <div class="info-section">
+            <h3>Overall Rating</h3>
+            <p><strong>@Model.OverallRating.Value.ToString("F1")/5.0</strong></p>
+        </div>
+    }
+
+    <div class="signature-section">
+        <h3>Signatures</h3>
+        <div class="signature-grid">
+            <div>
+                <div class="signature-label">Employee Signature</div>
+                <div class="signature-box">
+                    @if (!string.IsNullOrEmpty(Model.EmployeeSignature))
+                    {
+                        <p>@Model.EmployeeSignature</p>
+                        <p class="date">Date: @Model.EmployeeSignedDate?.ToString("MMM dd, yyyy")</p>
+                    }
+                </div>
+            </div>
+            <div>
+                <div class="signature-label">Manager Signature</div>
+                <div class="signature-box">
+                    @if (!string.IsNullOrEmpty(Model.ManagerSignature))
+                    {
+                        <p>@Model.ManagerSignature</p>
+                        <p class="date">Date: @Model.ManagerSignedDate?.ToString("MMM dd, yyyy")</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="no-print" style="margin-top: 30px; text-align: center;">
+        <button onclick="window.print()" style="background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+            Print PDF
+        </button>
+        <button onclick="window.close()" style="background-color: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+            Close
+        </button>
+    </div>
+</body>
+</html>

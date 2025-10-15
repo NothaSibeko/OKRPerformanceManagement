@@ -53,6 +53,33 @@
                     <ul class="navbar-nav">
                         @if (User.Identity.IsAuthenticated)
                         {
+                            <!-- Notifications Dropdown -->
+                            <li class="nav-item dropdown me-3">
+                                <a class="nav-link dropdown-toggle d-flex align-items-center text-light position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <div class="notification-avatar">
+                                        <i class="fas fa-bell fa-2x text-light"></i>
+                                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notificationBadge" style="display: none;">
+                                            0
+                                        </span>
+                                    </div>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown" style="min-width: 350px; max-height: 400px; overflow-y: auto;">
+                                    <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                        <span><i class="fas fa-bell me-2"></i>Notifications</span>
+                                        <button class="btn btn-sm btn-outline-secondary" id="markAllReadBtn" style="display: none;">
+                                            <i class="fas fa-check-double"></i> Mark All Read
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li id="notificationList">
+                                        <div class="text-center py-3">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                            
+                            <!-- User Profile Dropdown -->
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle d-flex align-items-center text-light" href="#" id="userProfileDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <div class="user-avatar">
@@ -305,6 +332,181 @@
                 showToast('warning', '@Html.Raw(TempData["WarningMessage"])');
                 </text>
             }
+
+            // Notification System
+            let notificationCheckInterval;
+            
+            // Only initialize notification system if user is authenticated and elements exist
+            if (document.getElementById('notificationBadge') && document.getElementById('notificationList')) {
+                // Load notifications on page load
+                loadNotifications();
+                
+                // Check for new notifications every 30 seconds
+                notificationCheckInterval = setInterval(loadNotifications, 30000);
+                
+                // Mark all as read button
+                const markAllBtn = document.getElementById('markAllReadBtn');
+                if (markAllBtn) {
+                    markAllBtn.addEventListener('click', function() {
+                        markAllAsRead();
+                    });
+                }
+            }
+            
+            function loadNotifications() {
+                // Only make request if user is authenticated
+                if (!document.getElementById('notificationBadge')) return;
+                
+                fetch('/Notification/GetNotifications')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        updateNotificationBadge(data.unreadCount);
+                        updateNotificationList(data.notifications);
+                    })
+                    .catch(error => {
+                        console.error('Error loading notifications:', error);
+                        // Silently fail - don't show error to user
+                    });
+            }
+            
+            function updateNotificationBadge(count) {
+                const badge = document.getElementById('notificationBadge');
+                const markAllBtn = document.getElementById('markAllReadBtn');
+                
+                if (!badge || !markAllBtn) return; // Exit if elements don't exist
+                
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline-block';
+                    markAllBtn.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                    markAllBtn.style.display = 'none';
+                }
+            }
+            
+            function updateNotificationList(notifications) {
+                const list = document.getElementById('notificationList');
+                
+                if (!list) return; // Exit if element doesn't exist
+                
+                if (notifications.length === 0) {
+                    list.innerHTML = '<div class="text-center py-3 text-muted"><i class="fas fa-bell-slash me-2"></i>No notifications</div>';
+                    return;
+                }
+                
+                let html = '';
+                notifications.forEach(notification => {
+                    const isReadClass = notification.isRead ? '' : 'bg-light';
+                    const iconClass = getNotificationIcon(notification.type);
+                    
+                    html += `
+                        <li class="notification-item ${isReadClass}" data-id="${notification.id}">
+                            <div class="d-flex align-items-start p-2">
+                                <div class="me-3">
+                                    <i class="${iconClass} text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">${notification.title}</div>
+                                    <div class="small text-muted">${notification.message}</div>
+                                    <div class="small text-muted">${notification.createdDate}</div>
+                                    ${notification.senderName ? `<div class="small text-muted">From: ${notification.senderName}</div>` : ''}
+                                </div>
+                                ${!notification.isRead ? '<button class="btn btn-sm btn-outline-primary mark-read-btn" data-id="' + notification.id + '"><i class="fas fa-check"></i></button>' : ''}
+                            </div>
+                        </li>
+                    `;
+                });
+                
+                list.innerHTML = html;
+                
+                // Add click handlers for mark as read buttons
+                document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        markAsRead(id);
+                    });
+                });
+                
+                // Add click handlers for notification items
+                document.querySelectorAll('.notification-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        markAsRead(id);
+                    });
+                });
+            }
+            
+            function getNotificationIcon(type) {
+                switch(type) {
+                    case 'OKR_Submitted': return 'fas fa-clipboard-check';
+                    case 'OKR_Assigned': return 'fas fa-tasks';
+                    case 'Review_Assigned': return 'fas fa-star';
+                    case 'Review_Completed': return 'fas fa-check-circle';
+                    default: return 'fas fa-bell';
+                }
+            }
+            
+            function markAsRead(id) {
+                fetch('/Notification/MarkAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ id: parseInt(id) })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        loadNotifications(); // Reload to update UI
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking notification as read:', error);
+                    // Silently fail - don't show error to user
+                });
+            }
+            
+            function markAllAsRead() {
+                fetch('/Notification/MarkAllAsRead', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        loadNotifications(); // Reload to update UI
+                    }
+                })
+                .catch(error => {
+                    console.error('Error marking all notifications as read:', error);
+                    // Silently fail - don't show error to user
+                });
+            }
+            
+            // Clean up interval when page unloads
+            window.addEventListener('beforeunload', function() {
+                if (notificationCheckInterval) {
+                    clearInterval(notificationCheckInterval);
+                }
+            });
         });
     </script>
     

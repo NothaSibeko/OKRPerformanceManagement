@@ -165,9 +165,12 @@
                                 <i class="fas fa-exclamation-triangle"></i>
                                 No active performance review found for this employee.
                             </div>
-                            <a href="@Url.Action("CreateTemplateReview")" class="btn btn-success">
-                                <i class="fas fa-plus"></i> Create Review
-                            </a>
+                            @if (User.IsInRole("Manager"))
+                            {
+                                <a href="@Url.Action("CreateTemplateReview")" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> Create Review
+                                </a>
+                            }
                         }
                     </div>
                 </div>

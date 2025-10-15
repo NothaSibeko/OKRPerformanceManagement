@@ -11,8 +11,11 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Edit OKR</h1>
                 <div>
-                    <a href="@Url.Action("ViewOKR", new { id = Model?.Id })" class="btn btn-secondary">
-                        <i class="fas fa-eye"></i> View OKR
+                    <a href="@Url.Action("MyActiveReviews")" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-list"></i> My Active Reviews
+                    </a>
+                    <a href="@Url.Action("ReviewDetails", new { id = Model?.Id })" class="btn btn-secondary me-2">
+                        <i class="fas fa-eye"></i> View Details
                     </a>
                     <a href="@Url.Action("MyOKRs")" class="btn btn-secondary">
                         <i class="fas fa-arrow-left"></i> Back to My OKRs
@@ -216,7 +219,7 @@
                                     </button>
                                 </div>
                                 <div>
-                                    <a href="@Url.Action("ViewOKR", new { id = Model.Id })" class="btn btn-secondary">
+                                    <a href="@Url.Action("MyActiveReviews")" class="btn btn-secondary">
                                         <i class="fas fa-times"></i> Cancel
                                     </a>
                                 </div>

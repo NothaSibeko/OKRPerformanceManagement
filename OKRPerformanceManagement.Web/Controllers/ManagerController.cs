@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace OKRPerformanceManagement.Web.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Manager")]
     public class ManagerController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -39,9 +39,9 @@ namespace OKRPerformanceManagement.Web.Controllers
                 .Include(e => e.PerformanceReviews)
                 .ToListAsync();
 
-            // Get pending reviews
+            // Get pending reviews (reviews that need manager attention)
             var pendingReviews = await _context.PerformanceReviews
-                .Where(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Employee_Review")
+                .Where(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Manager_Review")
                 .Include(pr => pr.Employee)
                 .ToListAsync();
 
@@ -300,9 +300,9 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             if (currentEmployee == null) return NotFound();
 
-            // Get pending reviews
+            // Get pending reviews (reviews that need manager attention)
             var pendingReviews = await _context.PerformanceReviews
-                .Where(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Employee_Review")
+                .Where(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Manager_Review")
                 .Include(pr => pr.Employee)
                 .Include(pr => pr.Objectives)
                     .ThenInclude(o => o.KeyResults)
@@ -311,6 +311,183 @@ namespace OKRPerformanceManagement.Web.Controllers
             ViewBag.PendingReviews = pendingReviews;
             ViewBag.Manager = currentEmployee;
             ViewBag.UserRole = currentEmployee.Role;
+
+            return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ManagerReview(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentManager == null)
+            {
+                return NotFound("Manager record not found.");
+            }
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.OKRTemplate)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.ManagerId != currentManager.Id)
+            {
+                return NotFound("Review not found or you don't have permission to review this.");
+            }
+
+            // Only allow reviewing if status is Manager_Review or Discussion
+            if (review.Status != "Manager_Review" && review.Status != "Discussion")
+            {
+                TempData["ErrorMessage"] = "This review is not ready for manager review.";
+                return RedirectToAction("PendingReviews");
+            }
+
+            ViewBag.CurrentManager = currentManager;
+            ViewBag.Review = review;
+
+            return View(review);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ManagerReview(int id, IFormCollection form)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.Employee)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.ManagerId != currentManager?.Id)
+            {
+                return NotFound();
+            }
+
+            // Get form values
+            var action = form["action"].ToString();
+            var managerAssessment = form["managerAssessment"].ToString();
+            var overallRating = form["overallRating"].ToString();
+
+            // Update manager assessment
+            if (!string.IsNullOrEmpty(managerAssessment))
+            {
+                review.ManagerAssessment = managerAssessment;
+            }
+
+            // Update overall rating
+            if (!string.IsNullOrEmpty(overallRating) && decimal.TryParse(overallRating, out decimal overallRatingValue))
+            {
+                review.OverallRating = overallRatingValue;
+            }
+
+            // Update key results with manager ratings and comments
+            foreach (var keyResult in review.Objectives.SelectMany(o => o.KeyResults))
+            {
+                // Get manager rating for this key result
+                var ratingKey = $"managerRatings[{keyResult.Id}]";
+                if (form.ContainsKey(ratingKey))
+                {
+                    var ratingValue = form[ratingKey].ToString();
+                    if (!string.IsNullOrEmpty(ratingValue) && int.TryParse(ratingValue, out int managerRating))
+                    {
+                        keyResult.ManagerRating = managerRating;
+                        keyResult.ManagerRatedDate = DateTime.Now;
+                    }
+                }
+
+                // Get manager comments for this key result
+                var commentKey = $"managerComments[{keyResult.Id}]";
+                if (form.ContainsKey(commentKey))
+                {
+                    var commentValue = form[commentKey].ToString();
+                    if (!string.IsNullOrEmpty(commentValue))
+                    {
+                        keyResult.ManagerComments = commentValue;
+                    }
+                }
+            }
+
+            // Handle different actions
+            if (action == "schedule_discussion")
+            {
+                review.Status = "Discussion";
+                review.DiscussionDate = DateTime.Now;
+                TempData["SuccessMessage"] = "Review scheduled for discussion with employee. You can view it in your completed reviews.";
+            }
+            else if (action == "finalize")
+            {
+                review.Status = "Completed";
+                review.FinalizedDate = DateTime.Now;
+                TempData["SuccessMessage"] = "Review finalized successfully. You can view it in your completed reviews.";
+            }
+            else
+            {
+                review.ManagerReviewedDate = DateTime.Now;
+                TempData["SuccessMessage"] = "Manager review saved successfully. You can continue editing it from Pending Reviews.";
+            }
+
+            await _context.SaveChangesAsync();
+
+            // Send notification to employee
+            if (review.Employee?.UserId != null)
+            {
+                // Note: Notification service would be injected if needed
+                // await _notificationService.CreateNotificationAsync(
+                //     userId: review.Employee.UserId,
+                //     senderId: currentUserId,
+                //     title: "Manager Review Completed",
+                //     message: $"Your manager has completed reviewing your performance review.",
+                //     type: "Manager_Review_Completed",
+                //     actionUrl: $"/Employee/ReviewDetails/{id}",
+                //     relatedEntityId: id,
+                //     relatedEntityType: "PerformanceReview"
+                // );
+            }
+
+            // Redirect based on action taken
+            if (action == "schedule_discussion" || action == "finalize")
+            {
+                // If scheduled for discussion or finalized, redirect to review details
+                return RedirectToAction("ReviewDetails", new { id = id });
+            }
+            else
+            {
+                // If just saved, redirect back to pending reviews
+                return RedirectToAction("PendingReviews");
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MyReviews()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentEmployee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            if (currentEmployee == null)
+            {
+                return NotFound("Manager record not found.");
+            }
+
+            // Get all reviews for this manager (all statuses)
+            var allReviews = await _context.PerformanceReviews
+                .Where(pr => pr.ManagerId == currentEmployee.Id)
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .OrderByDescending(pr => pr.CreatedDate)
+                .ToListAsync();
+
+            ViewBag.AllReviews = allReviews;
+            ViewBag.CurrentManager = currentEmployee;
 
             return View();
         }
@@ -525,6 +702,7 @@ namespace OKRPerformanceManagement.Web.Controllers
             }
 
             var createdReviews = new List<int>();
+            var skippedEmployees = new List<string>();
 
             // Create a review for each selected employee
             foreach (var employee in selectedEmployees)
@@ -536,7 +714,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
                 if (existingReview != null)
                 {
-                    TempData["WarningMessage"] = $"Employee {employee.FirstName} {employee.LastName} already has an active review.";
+                    skippedEmployees.Add($"{employee.FirstName} {employee.LastName}");
                     continue;
                 }
 
@@ -607,16 +785,30 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             await _context.SaveChangesAsync();
 
-            if (createdReviews.Any())
+            // Prepare appropriate messages based on results
+            if (createdReviews.Any() && skippedEmployees.Any())
             {
+                // Some created, some skipped
                 TempData["SuccessMessage"] = $"Successfully created {createdReviews.Count} performance review(s) based on the {template.Name} template.";
-                return RedirectToAction("Index");
+                TempData["WarningMessage"] = $"Skipped {skippedEmployees.Count} employee(s) who already have active reviews: {string.Join(", ", skippedEmployees)}.";
+            }
+            else if (createdReviews.Any())
+            {
+                // All created successfully
+                TempData["SuccessMessage"] = $"Successfully created {createdReviews.Count} performance review(s) based on the {template.Name} template.";
+            }
+            else if (skippedEmployees.Any())
+            {
+                // All were skipped
+                TempData["ErrorMessage"] = $"No reviews were created. All selected employees already have active reviews: {string.Join(", ", skippedEmployees)}.";
             }
             else
             {
-                TempData["ErrorMessage"] = "No reviews were created. Please check for existing active reviews.";
-                return RedirectToAction("CreateTemplateReview");
+                // No employees selected (shouldn't happen due to earlier validation)
+                TempData["ErrorMessage"] = "No reviews were created. Please select at least one team member.";
             }
+
+            return RedirectToAction("Index");
         }
 
         [HttpGet]
@@ -785,6 +977,31 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been deactivated successfully.";
             return RedirectToAction("Index");
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadPDF(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.Objectives)
+                    .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.OKRTemplate)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.ManagerId != currentManager?.Id)
+            {
+                return NotFound();
+            }
+
+            // TODO: Implement PDF generation
+            // For now, return a view that can be printed as PDF
+            return View("PerformanceReviewPDF", review);
         }
 
     }

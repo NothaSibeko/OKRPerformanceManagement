@@ -26,6 +26,7 @@ namespace OKRPerformanceManagement.Data
         public DbSet<OKRTemplateObjective> OKRTemplateObjectives { get; set; }
         public DbSet<OKRTemplateKeyResult> OKRTemplateKeyResults { get; set; }
         public DbSet<UserSettings> UserSettings { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

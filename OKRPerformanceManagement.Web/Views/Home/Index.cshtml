@@ -165,6 +165,16 @@ else
                         <div class="col-md-3">
                             <a href="@Url.Action("CreateEmployee", "Manager")" class="btn btn-warning btn-lg btn-block mb-2">Create Employee</a>
                         </div>
+                        <div class="col-md-3">
+                            <form method="post" action="@Url.Action("CreateTestNotification", "TestNotification")" style="display: inline;">
+                                <button type="submit" class="btn btn-info btn-lg btn-block mb-2 w-100">Test Employee Notification</button>
+                            </form>
+                        </div>
+                        <div class="col-md-3">
+                            <form method="post" action="@Url.Action("CreateManagerNotification", "TestNotification")" style="display: inline;">
+                                <button type="submit" class="btn btn-secondary btn-lg btn-block mb-2 w-100">Test Manager Notification</button>
+                            </form>
+                        </div>
                     }
                     else if (userRole == "Admin")
                     {
@@ -183,10 +193,13 @@ else
                     }
                     else
                     {
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <a href="@Url.Action("MyActiveReviews", "Employee")" class="btn btn-success btn-lg btn-block mb-2">My Active Reviews</a>
+                        </div>
+                        <div class="col-md-4">
                             <a href="@Url.Action("MyPerformanceHistory", "Employee")" class="btn btn-primary btn-lg btn-block mb-2">My Performance Reviews</a>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <a href="@Url.Action("MyOKRs", "Employee")" class="btn btn-info btn-lg btn-block mb-2">View Current OKRs</a>
                         </div>
                     }
