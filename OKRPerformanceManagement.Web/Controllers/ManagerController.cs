@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using OKRPerformanceManagement.Data;
 using OKRPerformanceManagement.Models;
 using OKRPerformanceManagement.Web.ViewModels;
+using OKRPerformanceManagement.Web.Services;
 using System.Security.Claims;
 
 namespace OKRPerformanceManagement.Web.Controllers
@@ -14,11 +15,13 @@ namespace OKRPerformanceManagement.Web.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly INotificationService _notificationService;
 
-        public ManagerController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public ManagerController(ApplicationDbContext context, UserManager<ApplicationUser> userManager, INotificationService notificationService)
         {
             _context = context;
             _userManager = userManager;
+            _notificationService = notificationService;
         }
 
         public async Task<IActionResult> Index()
@@ -30,6 +33,18 @@ namespace OKRPerformanceManagement.Web.Controllers
             if (currentEmployee == null)
             {
                 return NotFound("Employee record not found.");
+            }
+
+            // Check if user has Manager role
+            var user = await _userManager.FindByIdAsync(currentUserId);
+            if (user != null)
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+                if (!userRoles.Contains("Manager"))
+                {
+                    TempData["ErrorMessage"] = "Access denied. You do not have Manager privileges.";
+                    return RedirectToAction("Index", "Home");
+                }
             }
 
             // Get all employees managed by this manager
@@ -191,11 +206,11 @@ namespace OKRPerformanceManagement.Web.Controllers
                         MeasurementSource = templateKeyResult.MeasurementSource,
                         Weight = templateKeyResult.Weight,
                         SortOrder = templateKeyResult.SortOrder,
-                        Rating1Description = templateKeyResult.Rating1Description,
-                        Rating2Description = templateKeyResult.Rating2Description,
-                        Rating3Description = templateKeyResult.Rating3Description,
-                        Rating4Description = templateKeyResult.Rating4Description,
-                        Rating5Description = templateKeyResult.Rating5Description,
+                        Rating1Description = templateKeyResult.Rating1Description ?? "Needs Improvement",
+                        Rating2Description = templateKeyResult.Rating2Description ?? "Below Expectations",
+                        Rating3Description = templateKeyResult.Rating3Description ?? "Meets Expectations",
+                        Rating4Description = templateKeyResult.Rating4Description ?? "Exceeds Expectations",
+                        Rating5Description = templateKeyResult.Rating5Description ?? "Outstanding",
                         EmployeeComments = "",
                         ManagerComments = "",
                         FinalComments = "",
@@ -714,7 +729,10 @@ namespace OKRPerformanceManagement.Web.Controllers
 
                 if (existingReview != null)
                 {
-                    skippedEmployees.Add($"{employee.FirstName} {employee.LastName}");
+                    var employeeName = string.IsNullOrWhiteSpace(employee.FirstName) && string.IsNullOrWhiteSpace(employee.LastName) 
+                        ? employee.Email 
+                        : $"{employee.FirstName} {employee.LastName}".Trim();
+                    skippedEmployees.Add(employeeName);
                     continue;
                 }
 
@@ -767,6 +785,11 @@ namespace OKRPerformanceManagement.Web.Controllers
                             MeasurementSource = templateKeyResult.MeasurementSource,
                             Weight = templateKeyResult.Weight,
                             SortOrder = templateKeyResult.SortOrder,
+                            Rating1Description = templateKeyResult.Rating1Description ?? "Needs Improvement",
+                            Rating2Description = templateKeyResult.Rating2Description ?? "Below Expectations",
+                            Rating3Description = templateKeyResult.Rating3Description ?? "Meets Expectations",
+                            Rating4Description = templateKeyResult.Rating4Description ?? "Exceeds Expectations",
+                            Rating5Description = templateKeyResult.Rating5Description ?? "Outstanding",
                             EmployeeRating = null,
                             ManagerRating = null,
                             FinalRating = null,
@@ -781,6 +804,21 @@ namespace OKRPerformanceManagement.Web.Controllers
                 }
 
                 createdReviews.Add(performanceReview.Id);
+
+                // Send notification to employee about new OKR assignment
+                if (employee.UserId != null)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        userId: employee.UserId,
+                        senderId: currentUserId,
+                        title: "New OKR Assigned",
+                        message: $"Your manager has assigned you a new OKR for the period {model.ReviewPeriodStart:MMM dd, yyyy} - {model.ReviewPeriodEnd:MMM dd, yyyy}. Please review and complete it.",
+                        type: "OKR_Assigned",
+                        actionUrl: $"/Employee/MyActiveReviews",
+                        relatedEntityId: performanceReview.Id,
+                        relatedEntityType: "PerformanceReview"
+                    );
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -789,18 +827,42 @@ namespace OKRPerformanceManagement.Web.Controllers
             if (createdReviews.Any() && skippedEmployees.Any())
             {
                 // Some created, some skipped
-                TempData["SuccessMessage"] = $"Successfully created {createdReviews.Count} performance review(s) based on the {template.Name} template.";
+                TempData["SuccessMessage"] = $"Successfully created {createdReviews.Count} performance review(s) based on the {template.Name} template. Notifications sent to employees.";
                 TempData["WarningMessage"] = $"Skipped {skippedEmployees.Count} employee(s) who already have active reviews: {string.Join(", ", skippedEmployees)}.";
+                
+                // Send notification to manager about partial success
+                await _notificationService.CreateNotificationAsync(
+                    userId: currentUserId,
+                    senderId: currentUserId,
+                    title: "Partial Review Creation Success",
+                    message: $"Successfully created {createdReviews.Count} review(s), but skipped {skippedEmployees.Count} employee(s) who already have active reviews: {string.Join(", ", skippedEmployees)}.",
+                    type: "Review_Creation_Partial",
+                    actionUrl: "/Manager/Index",
+                    relatedEntityId: null,
+                    relatedEntityType: "ReviewCreation"
+                );
             }
             else if (createdReviews.Any())
             {
                 // All created successfully
-                TempData["SuccessMessage"] = $"Successfully created {createdReviews.Count} performance review(s) based on the {template.Name} template.";
+                TempData["SuccessMessage"] = $"Successfully created {createdReviews.Count} performance review(s) based on the {template.Name} template. Notifications sent to employees.";
             }
             else if (skippedEmployees.Any())
             {
                 // All were skipped
                 TempData["ErrorMessage"] = $"No reviews were created. All selected employees already have active reviews: {string.Join(", ", skippedEmployees)}.";
+                
+                // Send notification to manager about failed review creation
+                await _notificationService.CreateNotificationAsync(
+                    userId: currentUserId,
+                    senderId: currentUserId,
+                    title: "Review Creation Failed",
+                    message: $"No reviews were created. All selected employees already have active reviews: {string.Join(", ", skippedEmployees)}.",
+                    type: "Review_Creation_Failed",
+                    actionUrl: "/Manager/CreateTemplateReview",
+                    relatedEntityId: null,
+                    relatedEntityType: "ReviewCreation"
+                );
             }
             else
             {
@@ -931,7 +993,10 @@ namespace OKRPerformanceManagement.Web.Controllers
 
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been updated successfully.";
+                var employeeName = string.IsNullOrWhiteSpace(employee.FirstName) && string.IsNullOrWhiteSpace(employee.LastName) 
+                    ? employee.Email 
+                    : $"{employee.FirstName} {employee.LastName}".Trim();
+                TempData["SuccessMessage"] = $"Employee {employeeName} has been updated successfully.";
                 return RedirectToAction("Index");
             }
 
@@ -975,7 +1040,10 @@ namespace OKRPerformanceManagement.Web.Controllers
             employee.IsActive = false;
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been deactivated successfully.";
+            var employeeName = string.IsNullOrWhiteSpace(employee.FirstName) && string.IsNullOrWhiteSpace(employee.LastName) 
+                ? employee.Email 
+                : $"{employee.FirstName} {employee.LastName}".Trim();
+            TempData["SuccessMessage"] = $"Employee {employeeName} has been deactivated successfully.";
             return RedirectToAction("Index");
         }
 

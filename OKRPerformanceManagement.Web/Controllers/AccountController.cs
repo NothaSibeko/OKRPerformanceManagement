@@ -202,49 +202,5 @@ namespace OKRPerformanceManagement.Web.Controllers
             return View();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> CreateTestUser()
-        {
-            // Create a test manager user
-            var testUser = new ApplicationUser
-            {
-                UserName = "manager@test.com",
-                Email = "manager@test.com",
-                EmailConfirmed = true,
-                FirstName = "Test",
-                LastName = "Manager"
-            };
-
-            var result = await _userManager.CreateAsync(testUser, "Test123!");
-            
-            if (result.Succeeded)
-            {
-                // Add to Manager role
-                await _userManager.AddToRoleAsync(testUser, "Manager");
-                
-                // Create employee record
-                var employee = new Employee
-                {
-                    UserId = testUser.Id,
-                    FirstName = "Test",
-                    LastName = "Manager",
-                    Email = "manager@test.com",
-                    Role = "Manager",
-                    Position = "Test Manager",
-                    CreatedDate = DateTime.Now
-                };
-                
-                _context.Employees.Add(employee);
-                await _context.SaveChangesAsync();
-                
-                TempData["SuccessMessage"] = "Test user created: manager@test.com / Test123!";
-            }
-            else
-            {
-                TempData["ErrorMessage"] = "Failed to create test user: " + string.Join(", ", result.Errors.Select(e => e.Description));
-            }
-            
-            return RedirectToAction("Login");
-        }
     }
 }

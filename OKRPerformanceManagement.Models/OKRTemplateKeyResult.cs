@@ -40,18 +40,23 @@ namespace OKRPerformanceManagement.Models
         public int SortOrder { get; set; }
         
         // Rating Descriptions
+        [Required]
         [StringLength(2000)]
         public string Rating1Description { get; set; }
         
+        [Required]
         [StringLength(2000)]
         public string Rating2Description { get; set; }
         
+        [Required]
         [StringLength(2000)]
         public string Rating3Description { get; set; }
         
+        [Required]
         [StringLength(2000)]
         public string Rating4Description { get; set; }
         
+        [Required]
         [StringLength(2000)]
         public string Rating5Description { get; set; }
     }

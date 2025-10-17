@@ -62,5 +62,6 @@ namespace OKRPerformanceManagement.Web.Controllers
             
             return Json(new { count });
         }
+
     }
 }

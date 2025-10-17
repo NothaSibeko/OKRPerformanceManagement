@@ -365,6 +365,7 @@
                         return response.json();
                     })
                     .then(data => {
+                        console.log('Notifications loaded:', data); // Debug log
                         updateNotificationBadge(data.unreadCount);
                         updateNotificationList(data.notifications);
                     })
@@ -378,15 +379,22 @@
                 const badge = document.getElementById('notificationBadge');
                 const markAllBtn = document.getElementById('markAllReadBtn');
                 
-                if (!badge || !markAllBtn) return; // Exit if elements don't exist
+                console.log('Updating notification badge with count:', count); // Debug log
+                
+                if (!badge || !markAllBtn) {
+                    console.log('Badge or markAllBtn not found'); // Debug log
+                    return; // Exit if elements don't exist
+                }
                 
                 if (count > 0) {
                     badge.textContent = count;
                     badge.style.display = 'inline-block';
                     markAllBtn.style.display = 'inline-block';
+                    console.log('Badge displayed with count:', count); // Debug log
                 } else {
                     badge.style.display = 'none';
                     markAllBtn.style.display = 'none';
+                    console.log('Badge hidden'); // Debug log
                 }
             }
             
@@ -448,6 +456,8 @@
                     case 'OKR_Assigned': return 'fas fa-tasks';
                     case 'Review_Assigned': return 'fas fa-star';
                     case 'Review_Completed': return 'fas fa-check-circle';
+                    case 'Review_Creation_Failed': return 'fas fa-exclamation-triangle';
+                    case 'Review_Creation_Partial': return 'fas fa-exclamation-circle';
                     default: return 'fas fa-bell';
                 }
             }

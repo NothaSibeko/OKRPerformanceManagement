@@ -165,16 +165,6 @@ else
                         <div class="col-md-3">
                             <a href="@Url.Action("CreateEmployee", "Manager")" class="btn btn-warning btn-lg btn-block mb-2">Create Employee</a>
                         </div>
-                        <div class="col-md-3">
-                            <form method="post" action="@Url.Action("CreateTestNotification", "TestNotification")" style="display: inline;">
-                                <button type="submit" class="btn btn-info btn-lg btn-block mb-2 w-100">Test Employee Notification</button>
-                            </form>
-                        </div>
-                        <div class="col-md-3">
-                            <form method="post" action="@Url.Action("CreateManagerNotification", "TestNotification")" style="display: inline;">
-                                <button type="submit" class="btn btn-secondary btn-lg btn-block mb-2 w-100">Test Manager Notification</button>
-                            </form>
-                        </div>
                     }
                     else if (userRole == "Admin")
                     {

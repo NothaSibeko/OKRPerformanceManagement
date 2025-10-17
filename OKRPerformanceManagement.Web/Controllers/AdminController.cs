@@ -216,7 +216,10 @@ namespace OKRPerformanceManagement.Web.Controllers
             employee.IsActive = false;
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Employee {employee.FirstName} {employee.LastName} has been deactivated successfully.";
+            var employeeName = string.IsNullOrWhiteSpace(employee.FirstName) && string.IsNullOrWhiteSpace(employee.LastName) 
+                ? employee.Email 
+                : $"{employee.FirstName} {employee.LastName}".Trim();
+            TempData["SuccessMessage"] = $"Employee {employeeName} has been deactivated successfully.";
             return RedirectToAction("Index");
         }
 

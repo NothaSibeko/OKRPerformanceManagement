@@ -32,9 +32,9 @@ namespace OKRPerformanceManagement.Web.Services
                 Title = title,
                 Message = message,
                 Type = type,
-                ActionUrl = actionUrl,
+                ActionUrl = actionUrl ?? "/", // Default to home page if no action URL provided
                 RelatedEntityId = relatedEntityId,
-                RelatedEntityType = relatedEntityType,
+                RelatedEntityType = relatedEntityType ?? "General", // Default entity type
                 CreatedDate = DateTime.Now
             };
 

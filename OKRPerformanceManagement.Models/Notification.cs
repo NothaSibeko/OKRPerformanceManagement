@@ -27,9 +27,11 @@ namespace OKRPerformanceManagement.Models
         [StringLength(500)]
         public string Message { get; set; }
 
+        [Required]
         [StringLength(50)]
         public string Type { get; set; } // "OKR_Submitted", "OKR_Assigned", "Review_Assigned", etc.
 
+        [Required]
         [StringLength(100)]
         public string ActionUrl { get; set; } // URL to navigate when clicked
 
@@ -41,6 +43,7 @@ namespace OKRPerformanceManagement.Models
 
         // Optional: Reference to related entity
         public int? RelatedEntityId { get; set; } // Could be OKR ID, Review ID, etc.
+        [Required]
         public string RelatedEntityType { get; set; } // "OKR", "Review", etc.
     }
 }

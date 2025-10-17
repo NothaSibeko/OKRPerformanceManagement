@@ -113,6 +113,19 @@ namespace OKRPerformanceManagement.Data
                 .WithMany(r => r.OKRTemplates)
                 .HasForeignKey(t => t.RoleId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Notification foreign key relationships
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.User)
+                .WithMany()
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            modelBuilder.Entity<Notification>()
+                .HasOne(n => n.Sender)
+                .WithMany()
+                .HasForeignKey(n => n.SenderId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

@@ -60,6 +60,7 @@ namespace OKRPerformanceManagement.Web.Controllers
             var review = await _context.PerformanceReviews
                 .Include(pr => pr.Objectives)
                     .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.Manager)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
 
             if (review == null || review.EmployeeId != currentEmployee?.Id)
@@ -317,6 +318,7 @@ namespace OKRPerformanceManagement.Web.Controllers
             var review = await _context.PerformanceReviews
                 .Include(pr => pr.Objectives)
                     .ThenInclude(o => o.KeyResults)
+                .Include(pr => pr.Manager)
                 .FirstOrDefaultAsync(pr => pr.Id == id);
 
             if (review == null || review.EmployeeId != currentEmployee?.Id)
