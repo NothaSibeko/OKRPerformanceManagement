@@ -157,11 +157,17 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-12">
-                                <a href="@Url.Action("ManagerReview", new { id = Model.Id })" class="btn btn-primary btn-lg">
+                            <div class="col-md-6 mb-3">
+                                <a href="@Url.Action("ManagerReview", new { id = Model.Id })" class="btn btn-primary btn-lg w-100">
                                     <i class="fas fa-edit"></i> Add Manager Review
                                 </a>
                                 <p class="text-muted mt-2">Click here to provide your assessment, ratings, and comments for this performance review.</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="@Url.Action("ScheduleDiscussion", new { id = Model.Id })" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-calendar-alt"></i> Schedule Discussion
+                                </a>
+                                <p class="text-muted mt-2">Schedule a discussion session with the employee to review their performance.</p>
                             </div>
                         </div>
                     </div>
@@ -178,22 +184,41 @@
                         <h6 class="m-0 font-weight-bold text-warning">Review Status: Discussion</h6>
                     </div>
                     <div class="card-body">
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            This review has been scheduled for discussion with the employee. 
-                            You can continue to edit the review or finalize it after the discussion.
-                        </div>
+                        @if (Model.ScheduledDiscussionDate.HasValue)
+                        {
+                            <div class="alert alert-success">
+                                <i class="fas fa-calendar-check me-2"></i>
+                                <strong>Discussion Scheduled:</strong> 
+                                @Model.ScheduledDiscussionDate.Value.ToString("MMMM dd, yyyy 'at' hh:mm tt")
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                This review has been scheduled for discussion with the employee. 
+                                You can continue to edit the review or finalize it after the discussion.
+                            </div>
+                        }
                         <div class="row">
-                            <div class="col-md-6">
-                                <a href="@Url.Action("ManagerReview", new { id = Model.Id })" class="btn btn-warning">
+                            <div class="col-md-4 mb-2">
+                                <a href="@Url.Action("ManagerReview", new { id = Model.Id })" class="btn btn-warning w-100">
                                     <i class="fas fa-edit"></i> Continue Review
                                 </a>
                             </div>
-                            <div class="col-md-6">
+                            @if (!Model.ScheduledDiscussionDate.HasValue)
+                            {
+                                <div class="col-md-4 mb-2">
+                                    <a href="@Url.Action("ScheduleDiscussion", new { id = Model.Id })" class="btn btn-info w-100">
+                                        <i class="fas fa-calendar-alt"></i> Schedule Discussion
+                                    </a>
+                                </div>
+                            }
+                            <div class="col-md-4 mb-2">
                                 <form method="post" action="@Url.Action("ManagerReview")" style="display: inline;">
                                     <input type="hidden" name="id" value="@Model.Id" />
                                     <input type="hidden" name="action" value="finalize" />
-                                    <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to finalize this review?')">
+                                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Are you sure you want to finalize this review?')">
                                         <i class="fas fa-check"></i> Finalize Review
                                     </button>
                                 </form>

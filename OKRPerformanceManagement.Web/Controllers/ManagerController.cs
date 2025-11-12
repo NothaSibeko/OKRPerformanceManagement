@@ -66,9 +66,20 @@ namespace OKRPerformanceManagement.Web.Controllers
                 .Include(pr => pr.Employee)
                 .ToListAsync();
 
+            // Get upcoming scheduled discussions (future dates only)
+            var upcomingDiscussions = await _context.PerformanceReviews
+                .Where(pr => pr.ManagerId == currentEmployee.Id 
+                    && pr.ScheduledDiscussionDate.HasValue 
+                    && pr.ScheduledDiscussionDate.Value >= DateTime.Now
+                    && pr.Status == "Discussion")
+                .Include(pr => pr.Employee)
+                .OrderBy(pr => pr.ScheduledDiscussionDate)
+                .ToListAsync();
+
             ViewBag.TeamMembers = teamMembers;
             ViewBag.PendingReviews = pendingReviews;
             ViewBag.CompletedReviews = completedReviews;
+            ViewBag.UpcomingDiscussions = upcomingDiscussions;
             ViewBag.Manager = currentEmployee;
             ViewBag.UserRole = "Manager";
 
@@ -262,6 +273,98 @@ namespace OKRPerformanceManagement.Web.Controllers
             return RedirectToAction("ReviewDetails", new { id });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ScheduleDiscussion(int id)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.ManagerId != currentManager?.Id)
+            {
+                return NotFound("Review not found or you don't have permission to schedule this discussion.");
+            }
+
+            // Only allow scheduling if status is Manager_Review
+            if (review.Status != "Manager_Review")
+            {
+                TempData["ErrorMessage"] = "Discussion can only be scheduled after manager review is completed.";
+                return RedirectToAction("ReviewDetails", new { id });
+            }
+
+            ViewBag.Review = review;
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ScheduleDiscussion(int id, DateTime scheduledDate, string? scheduledTime = null)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var currentManager = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            var review = await _context.PerformanceReviews
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .FirstOrDefaultAsync(pr => pr.Id == id);
+
+            if (review == null || review.ManagerId != currentManager?.Id)
+            {
+                return NotFound("Review not found or you don't have permission to schedule this discussion.");
+            }
+
+            // Validate date is in the future
+            if (scheduledDate.Date < DateTime.Today)
+            {
+                ModelState.AddModelError("scheduledDate", "Discussion date must be in the future.");
+                ViewBag.Review = review;
+                return View();
+            }
+
+            // Combine date and time if time is provided
+            DateTime scheduledDateTime = scheduledDate;
+            if (!string.IsNullOrEmpty(scheduledTime) && TimeSpan.TryParse(scheduledTime, out TimeSpan time))
+            {
+                scheduledDateTime = scheduledDate.Date.Add(time);
+            }
+            else
+            {
+                // Default to 2 PM if no time specified
+                scheduledDateTime = scheduledDate.Date.AddHours(14);
+            }
+
+            // Update review with scheduled discussion date
+            review.ScheduledDiscussionDate = scheduledDateTime;
+            review.Status = "Discussion";
+            review.DiscussionDate = DateTime.Now; // Mark that discussion phase has started
+
+            await _context.SaveChangesAsync();
+
+            // Send notification to employee
+            if (review.Employee?.UserId != null)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    userId: review.Employee.UserId,
+                    senderId: currentUserId,
+                    title: "Discussion Session Scheduled",
+                    message: $"Your manager has scheduled a discussion session for your performance review on {scheduledDateTime:MMMM dd, yyyy} at {scheduledDateTime:hh:mm tt}. Please prepare for the discussion.",
+                    type: "Discussion_Scheduled",
+                    actionUrl: $"/Employee/ReviewDetails/{id}",
+                    relatedEntityId: id,
+                    relatedEntityType: "PerformanceReview"
+                );
+            }
+
+            TempData["SuccessMessage"] = $"Discussion session scheduled successfully for {scheduledDateTime:MMMM dd, yyyy} at {scheduledDateTime:hh:mm tt}. The employee has been notified.";
+            return RedirectToAction("ReviewDetails", new { id });
+        }
+
 
         public async Task<IActionResult> ReviewEmployee(int id)
         {
@@ -433,9 +536,8 @@ namespace OKRPerformanceManagement.Web.Controllers
             // Handle different actions
             if (action == "schedule_discussion")
             {
-                review.Status = "Discussion";
-                review.DiscussionDate = DateTime.Now;
-                TempData["SuccessMessage"] = "Review scheduled for discussion with employee. You can view it in your completed reviews.";
+                // Redirect to schedule discussion page instead of scheduling directly
+                return RedirectToAction("ScheduleDiscussion", new { id = id });
             }
             else if (action == "finalize")
             {

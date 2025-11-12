@@ -78,6 +78,16 @@ namespace OKRPerformanceManagement.Web.Controllers
                 ViewBag.CompletedReviews = await _context.PerformanceReviews
                     .CountAsync(pr => pr.ManagerId == currentEmployee.Id && pr.Status == "Completed");
                 ViewBag.TeamMembers = teamMembers;
+                
+                // Get upcoming scheduled discussions for manager (future dates only)
+                ViewBag.UpcomingDiscussions = await _context.PerformanceReviews
+                    .Where(pr => pr.ManagerId == currentEmployee.Id 
+                        && pr.ScheduledDiscussionDate.HasValue 
+                        && pr.ScheduledDiscussionDate.Value >= DateTime.Now
+                        && pr.Status == "Discussion")
+                    .Include(pr => pr.Employee)
+                    .OrderBy(pr => pr.ScheduledDiscussionDate)
+                    .ToListAsync();
             }
             else
             {
@@ -94,6 +104,16 @@ namespace OKRPerformanceManagement.Web.Controllers
                     ViewBag.MyActiveReviews = await _context.PerformanceReviews
                         .Where(pr => pr.EmployeeId == currentEmployee.Id && 
                             (pr.Status == "Draft" || pr.Status == "Employee_Review"))
+                        .ToListAsync();
+                    
+                    // Get upcoming scheduled discussions (future dates only)
+                    ViewBag.UpcomingDiscussions = await _context.PerformanceReviews
+                        .Where(pr => pr.EmployeeId == currentEmployee.Id 
+                            && pr.ScheduledDiscussionDate.HasValue 
+                            && pr.ScheduledDiscussionDate.Value >= DateTime.Now
+                            && pr.Status == "Discussion")
+                        .Include(pr => pr.Manager)
+                        .OrderBy(pr => pr.ScheduledDiscussionDate)
                         .ToListAsync();
                 }
                 else

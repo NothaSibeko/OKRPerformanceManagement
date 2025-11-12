@@ -31,6 +31,7 @@ namespace OKRPerformanceManagement.Models
         public DateTime? SubmittedDate { get; set; }
         public DateTime? ManagerReviewedDate { get; set; }
         public DateTime? DiscussionDate { get; set; }
+        public DateTime? ScheduledDiscussionDate { get; set; }
         public DateTime? FinalizedDate { get; set; }
         
         [StringLength(2000)]

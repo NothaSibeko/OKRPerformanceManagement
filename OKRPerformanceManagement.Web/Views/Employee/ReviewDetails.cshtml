@@ -63,6 +63,15 @@
                         <p><strong>Overall Rating:</strong><br>
                         <span class="badge badge-success">@Model.OverallRating.Value.ToString("F1")</span></p>
                     }
+                    
+                    @if (Model.ScheduledDiscussionDate.HasValue)
+                    {
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            <strong>Discussion Scheduled:</strong><br>
+                            @Model.ScheduledDiscussionDate.Value.ToString("MMMM dd, yyyy 'at' hh:mm tt")
+                        </div>
+                    }
                 </div>
             </div>
         </div>

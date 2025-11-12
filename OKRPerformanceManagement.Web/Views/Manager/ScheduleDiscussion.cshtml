@@ -1,0 +1,168 @@
+@model OKRPerformanceManagement.Models.PerformanceReview
+@{
+    ViewData["Title"] = "Schedule Discussion";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var review = ViewBag.Review as OKRPerformanceManagement.Models.PerformanceReview ?? Model;
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Schedule Discussion Session</h1>
+                <a href="@Url.Action("ReviewDetails", new { id = review.Id })" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Review Details
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Select Date and Time</h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Please select a date and time for the discussion session with <strong>@review.Employee.FirstName @review.Employee.LastName</strong>.
+                    </div>
+
+                    <form method="post" asp-action="ScheduleDiscussion" asp-controller="Manager">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@review.Id" />
+
+                        <div class="form-group mb-3">
+                            <label for="scheduledDate" class="form-label">
+                                <i class="fas fa-calendar-alt me-2"></i>Discussion Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" 
+                                   class="form-control" 
+                                   id="scheduledDate" 
+                                   name="scheduledDate" 
+                                   required 
+                                   min="@DateTime.Today.ToString("yyyy-MM-dd")"
+                                   value="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" />
+                            <small class="form-text text-muted">Please select a future date for the discussion.</small>
+                            @if (ViewData.ModelState["scheduledDate"]?.Errors?.Count > 0)
+                            {
+                                <span class="text-danger">@ViewData.ModelState["scheduledDate"].Errors[0].ErrorMessage</span>
+                            }
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="scheduledTime" class="form-label">
+                                <i class="fas fa-clock me-2"></i>Discussion Time
+                            </label>
+                            <input type="time" 
+                                   class="form-control" 
+                                   id="scheduledTime" 
+                                   name="scheduledTime" 
+                                   value="14:00" />
+                            <small class="form-text text-muted">Default time is 2:00 PM. You can change this if needed.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-calendar-check me-2"></i>Schedule Discussion Session
+                            </button>
+                            <a href="@Url.Action("ReviewDetails", new { id = review.Id })" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Review Information</h6>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">@review.Employee.FirstName @review.Employee.LastName</h5>
+                    <p class="text-muted mb-2">
+                        <strong>Position:</strong> @review.Employee.Position
+                    </p>
+                    <p class="text-muted mb-2">
+                        <strong>Review Period:</strong><br>
+                        @review.ReviewPeriodStart.ToString("MMM dd, yyyy") - @review.ReviewPeriodEnd.ToString("MMM dd, yyyy")
+                    </p>
+                    <p class="text-muted mb-2">
+                        <strong>Status:</strong> 
+                        <span class="badge bg-warning">@review.Status</span>
+                    </p>
+                    @if (review.ScheduledDiscussionDate.HasValue)
+                    {
+                        <div class="alert alert-warning mt-3">
+                            <strong>Previously Scheduled:</strong><br>
+                            @review.ScheduledDiscussionDate.Value.ToString("MMMM dd, yyyy 'at' hh:mm tt")
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card shadow mt-3">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-info">What happens next?</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Employee will be notified via notification
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Review status will change to "Discussion"
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            You can view scheduled date in review details
+                        </li>
+                        <li>
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            After discussion, you can finalize the review
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set minimum date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.getElementById('scheduledDate');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.setAttribute('min', today);
+        
+        // If no value is set, default to tomorrow
+        if (!dateInput.value) {
+            const tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.value = tomorrow.toISOString().split('T')[0];
+        }
+    });
+</script>
+
+<style>
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 0.35rem;
+    }
+    
+    .card-header {
+        background-color: #f8f9fc;
+        border-bottom: 1px solid #e3e6f0;
+    }
+</style>
+
