@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using OKRPerformanceManagement.Models;
 using OKRPerformanceManagement.Data;
 using OKRPerformanceManagement.Web.ViewModels;
@@ -11,15 +12,18 @@ namespace OKRPerformanceManagement.Web.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly ApplicationDbContext _context;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
             SignInManager<ApplicationUser> signInManager,
+            RoleManager<IdentityRole> roleManager,
             ApplicationDbContext context)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _context = context;
         }
 
@@ -133,7 +137,39 @@ namespace OKRPerformanceManagement.Web.Controllers
                     _context.Employees.Add(employee);
                     await _context.SaveChangesAsync();
 
+                    // Assign Identity role to user BEFORE signing in
+                    if (!string.IsNullOrEmpty(model.Role))
+                    {
+                        // Ensure the role exists
+                        if (!await _roleManager.RoleExistsAsync(model.Role))
+                        {
+                            await _roleManager.CreateAsync(new IdentityRole(model.Role));
+                        }
+                        
+                        // Assign the role to the user
+                        var roleResult = await _userManager.AddToRoleAsync(user, model.Role);
+                        if (!roleResult.Succeeded)
+                        {
+                            // Log errors but don't fail registration
+                            foreach (var error in roleResult.Errors)
+                            {
+                                // Role assignment failed, but user is created
+                                // They can still log in and an admin can assign the role later
+                            }
+                        }
+                    }
+
+                    // Sign in the user first
                     await _signInManager.SignInAsync(user, isPersistent: false);
+                    
+                    // If role was assigned, refresh the sign-in to ensure role claims are included in the cookie
+                    if (!string.IsNullOrEmpty(model.Role))
+                    {
+                        // Reload user to get fresh role data
+                        user = await _userManager.FindByIdAsync(user.Id);
+                        // Refresh sign-in to update the authentication cookie with role claims
+                        await _signInManager.RefreshSignInAsync(user);
+                    }
                     
                     // Redirect to Home for all users
                     return RedirectToAction("Index", "Home");
@@ -200,6 +236,48 @@ namespace OKRPerformanceManagement.Web.Controllers
             ViewBag.EmployeeCount = employees.Count;
             
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult AccessDenied(string? returnUrl = null)
+        {
+            ViewData["ReturnUrl"] = returnUrl;
+            return View();
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> CheckMyRoles()
+        {
+            var currentUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(currentUserId))
+            {
+                return Json(new { error = "User not found" });
+            }
+
+            var user = await _userManager.FindByIdAsync(currentUserId);
+            if (user == null)
+            {
+                return Json(new { error = "User not found in database" });
+            }
+
+            var identityRoles = await _userManager.GetRolesAsync(user);
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.UserId == currentUserId);
+            
+            var claims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            var roleClaims = User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role).Select(c => c.Value).ToList();
+
+            return Json(new
+            {
+                userId = currentUserId,
+                email = user.Email,
+                identityRoles = identityRoles,
+                employeeRole = employee?.Role,
+                roleClaims = roleClaims,
+                isInRoleManager = User.IsInRole("Manager"),
+                isInRoleAdmin = User.IsInRole("Admin"),
+                allClaims = claims
+            });
         }
 
     }
