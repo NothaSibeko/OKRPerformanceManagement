@@ -21,6 +21,25 @@ namespace OKRPerformanceManagement.Web.Controllers
             _userManager = userManager;
         }
 
+        // Helper method to set user role in ViewBag
+        private async Task SetUserRoleAsync()
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var employee = await _context.Employees
+                .FirstOrDefaultAsync(e => e.UserId == currentUserId);
+
+            string userRole = "Employee";
+            if (User.IsInRole("Admin"))
+            {
+                userRole = "Admin";
+            }
+            else if (User.IsInRole("Manager") || (employee != null && employee.Role == "Manager"))
+            {
+                userRole = "Manager";
+            }
+            ViewBag.UserRole = userRole;
+        }
+
         // View Profile
         [HttpGet]
         public async Task<IActionResult> ViewProfile()
@@ -37,6 +56,18 @@ namespace OKRPerformanceManagement.Web.Controllers
                 TempData["ErrorMessage"] = "Profile not found.";
                 return RedirectToAction("Index", "Home");
             }
+
+            // Determine user role for navigation
+            string userRole = "Employee";
+            if (User.IsInRole("Admin"))
+            {
+                userRole = "Admin";
+            }
+            else if (User.IsInRole("Manager") || employee.Role == "Manager")
+            {
+                userRole = "Manager";
+            }
+            ViewBag.UserRole = userRole;
 
             var model = new ViewProfileViewModel
             {
@@ -67,6 +98,18 @@ namespace OKRPerformanceManagement.Web.Controllers
                 TempData["ErrorMessage"] = "Profile not found.";
                 return RedirectToAction("Index", "Home");
             }
+
+            // Determine user role for navigation
+            string userRole = "Employee";
+            if (User.IsInRole("Admin"))
+            {
+                userRole = "Admin";
+            }
+            else if (User.IsInRole("Manager") || employee.Role == "Manager")
+            {
+                userRole = "Manager";
+            }
+            ViewBag.UserRole = userRole;
 
             var model = new EditProfileViewModel
             {
@@ -111,8 +154,9 @@ namespace OKRPerformanceManagement.Web.Controllers
 
         // Change Password
         [HttpGet]
-        public IActionResult ChangePassword()
+        public async Task<IActionResult> ChangePassword()
         {
+            await SetUserRoleAsync();
             return View();
         }
 
@@ -154,6 +198,7 @@ namespace OKRPerformanceManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> PerformanceHistory()
         {
+            await SetUserRoleAsync();
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var employee = await _context.Employees
                 .FirstOrDefaultAsync(e => e.UserId == currentUserId);
@@ -178,6 +223,7 @@ namespace OKRPerformanceManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Settings()
         {
+            await SetUserRoleAsync();
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             // Fallback to default values if UserSettings table doesn't exist yet
@@ -250,6 +296,7 @@ namespace OKRPerformanceManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Notifications()
         {
+            await SetUserRoleAsync();
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             UserSettings userSettings = null;
@@ -323,6 +370,7 @@ namespace OKRPerformanceManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> PrivacySecurity()
         {
+            await SetUserRoleAsync();
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             UserSettings userSettings = null;
@@ -439,14 +487,16 @@ namespace OKRPerformanceManagement.Web.Controllers
 
         // Help & Support
         [HttpGet]
-        public IActionResult UserGuide()
+        public async Task<IActionResult> UserGuide()
         {
+            await SetUserRoleAsync();
             return View();
         }
 
         [HttpGet]
-        public IActionResult ContactSupport()
+        public async Task<IActionResult> ContactSupport()
         {
+            await SetUserRoleAsync();
             return View();
         }
 
@@ -465,8 +515,9 @@ namespace OKRPerformanceManagement.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult About()
+        public async Task<IActionResult> About()
         {
+            await SetUserRoleAsync();
             var model = new AboutViewModel
             {
                 ApplicationName = "OKR Performance Management System",

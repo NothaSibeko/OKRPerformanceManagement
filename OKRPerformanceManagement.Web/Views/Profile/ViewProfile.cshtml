@@ -10,8 +10,25 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="h3 mb-0 text-gray-800">My Profile</h1>
                 <div>
-                    <a href="@Url.Action("Index", "Admin")" class="btn btn-info me-2">
-                        <i class="fas fa-tachometer-alt"></i> Back to Admin Dashboard
+                    @{
+                        var userRole = ViewBag.UserRole as string ?? "Employee";
+                        string dashboardAction = "Index";
+                        string dashboardController = "Home";
+                        string dashboardText = "Back to Home";
+                        
+                        if (userRole == "Admin")
+                        {
+                            dashboardController = "Admin";
+                            dashboardText = "Back to Admin Dashboard";
+                        }
+                        else if (userRole == "Manager")
+                        {
+                            dashboardController = "Manager";
+                            dashboardText = "Back to Manager Dashboard";
+                        }
+                    }
+                    <a href="@Url.Action(dashboardAction, dashboardController)" class="btn btn-info me-2">
+                        <i class="fas fa-tachometer-alt"></i> @dashboardText
                     </a>
                     <a href="@Url.Action("EditProfile")" class="btn btn-primary">
                         <i class="fas fa-edit"></i> Edit Profile
@@ -33,7 +50,7 @@
                     </div>
                     <h5 class="mb-1">@Model.FirstName @Model.LastName</h5>
                     <p class="text-muted mb-0">@Model.Role</p>
-                    <span class="badge badge-success mt-2">@(Model.IsActive ? "Active" : "Inactive")</span>
+                    <span class="badge bg-success mt-2">@(Model.IsActive ? "Active" : "Inactive")</span>
                 </div>
             </div>
         </div>
@@ -97,7 +114,7 @@
                             <div class="mb-3">
                                 <label class="form-label fw-bold">Status</label>
                                 <p class="form-control-plaintext">
-                                    <span class="badge badge-@(Model.IsActive ? "success" : "danger")">
+                                    <span class="badge bg-@(Model.IsActive ? "success" : "danger")">
                                         @(Model.IsActive ? "Active" : "Inactive")
                                     </span>
                                 </p>
