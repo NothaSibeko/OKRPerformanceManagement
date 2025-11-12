@@ -50,8 +50,12 @@ namespace OKRPerformanceManagement.Web.Controllers
         public async Task<IActionResult> CreateEmployee()
         {
             var roles = await _context.EmployeeRoles.Where(r => r.IsActive).ToListAsync();
+            // Include all Managers, HR, and Admin - managers can also have managers (hierarchical structure)
             var managers = await _context.Employees
-                .Where(e => e.Role == "Manager")
+                .Where(e => (e.Role == "Manager" || e.Role == "HR" || e.Role == "Admin") && e.IsActive)
+                .OrderBy(e => e.Role)
+                .ThenBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
                 .ToListAsync();
 
             ViewBag.Roles = roles;
@@ -63,8 +67,31 @@ namespace OKRPerformanceManagement.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateEmployee(CreateEmployeeViewModel model)
         {
+            // Validate ManagerId is required
+            if (model.ManagerId == 0)
+            {
+                ModelState.AddModelError("ManagerId", "Manager is required. Every employee must have a manager to review their OKRs.");
+            }
+
             if (ModelState.IsValid)
             {
+                // Verify manager exists
+                var managerExists = await _context.Employees.AnyAsync(e => e.Id == model.ManagerId && e.IsActive);
+                if (!managerExists)
+                {
+                    ModelState.AddModelError("ManagerId", "Selected manager does not exist or is inactive.");
+                    var availableRoles = await _context.EmployeeRoles.Where(r => r.IsActive).ToListAsync();
+                    var availableManagers = await _context.Employees
+                        .Where(e => (e.Role == "Manager" || e.Role == "HR" || e.Role == "Admin") && e.IsActive)
+                        .OrderBy(e => e.Role)
+                        .ThenBy(e => e.FirstName)
+                        .ThenBy(e => e.LastName)
+                        .ToListAsync();
+                    ViewBag.Roles = availableRoles;
+                    ViewBag.Managers = availableManagers;
+                    return View(model);
+                }
+
                 // Create the user account
                 var user = new ApplicationUser
                 {
@@ -86,7 +113,7 @@ namespace OKRPerformanceManagement.Web.Controllers
                         Role = model.Role,
                         Position = model.Position,
                         UserId = user.Id,
-                        ManagerId = model.ManagerId == 0 ? null : model.ManagerId,
+                        ManagerId = model.ManagerId, // Now required
                         RoleId = model.RoleId,
                         LineOfBusiness = "Digital Industries - CSI3",
                         FinancialYear = "FY 2025",
@@ -121,7 +148,10 @@ namespace OKRPerformanceManagement.Web.Controllers
             // If we get here, there was an error - repopulate dropdowns
             var roles = await _context.EmployeeRoles.Where(r => r.IsActive).ToListAsync();
             var managers = await _context.Employees
-                .Where(e => e.Role == "Manager")
+                .Where(e => (e.Role == "Manager" || e.Role == "HR" || e.Role == "Admin") && e.IsActive)
+                .OrderBy(e => e.Role)
+                .ThenBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
                 .ToListAsync();
 
             ViewBag.Roles = roles;
@@ -144,7 +174,10 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             var roles = await _context.EmployeeRoles.Where(r => r.IsActive).ToListAsync();
             var managers = await _context.Employees
-                .Where(e => e.Role == "Manager" && e.Id != id)
+                .Where(e => (e.Role == "Manager" || e.Role == "HR" || e.Role == "Admin") && e.IsActive && e.Id != id)
+                .OrderBy(e => e.Role)
+                .ThenBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
                 .ToListAsync();
 
             ViewBag.Roles = roles;
@@ -158,7 +191,7 @@ namespace OKRPerformanceManagement.Web.Controllers
                 Email = employee.Email,
                 Role = employee.Role,
                 Position = employee.Position,
-                ManagerId = employee.ManagerId,
+                ManagerId = employee.ManagerId ?? 0, // Convert nullable to int, 0 means not set
                 RoleId = employee.RoleId,
                 IsActive = employee.IsActive
             };
@@ -169,6 +202,22 @@ namespace OKRPerformanceManagement.Web.Controllers
         [HttpPost]
         public async Task<IActionResult> EditEmployee(EditEmployeeViewModel model)
         {
+            // Validate ManagerId is required
+            if (model.ManagerId == 0)
+            {
+                ModelState.AddModelError("ManagerId", "Manager is required. Every employee must have a manager to review their OKRs.");
+            }
+
+            // Verify manager exists
+            if (model.ManagerId != 0)
+            {
+                var managerExists = await _context.Employees.AnyAsync(e => e.Id == model.ManagerId && e.IsActive);
+                if (!managerExists)
+                {
+                    ModelState.AddModelError("ManagerId", "Selected manager does not exist or is inactive.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 var employee = await _context.Employees.FindAsync(model.Id);
@@ -182,7 +231,7 @@ namespace OKRPerformanceManagement.Web.Controllers
                 employee.Email = model.Email;
                 employee.Role = model.Role;
                 employee.Position = model.Position;
-                employee.ManagerId = model.ManagerId == 0 ? null : model.ManagerId;
+                employee.ManagerId = model.ManagerId; // Now required
                 employee.RoleId = model.RoleId;
                 employee.IsActive = model.IsActive;
 

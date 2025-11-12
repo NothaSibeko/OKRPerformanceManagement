@@ -95,10 +95,13 @@ namespace OKRPerformanceManagement.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Register()
         {
-            // Get managers for the dropdown
+            // Get managers for the dropdown - include Managers, HR, and Admin (hierarchical structure)
             var managers = await _context.Employees
-                .Where(e => e.Role == "Manager")
-                .Select(e => new { e.Id, Name = $"{e.FirstName} {e.LastName}" })
+                .Where(e => (e.Role == "Manager" || e.Role == "HR" || e.Role == "Admin") && e.IsActive)
+                .OrderBy(e => e.Role)
+                .ThenBy(e => e.FirstName)
+                .ThenBy(e => e.LastName)
+                .Select(e => new { e.Id, Name = $"{e.FirstName} {e.LastName} ({e.Role})" })
                 .ToListAsync();
             
             ViewBag.Managers = managers;
@@ -109,6 +112,12 @@ namespace OKRPerformanceManagement.Web.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
+            // Validate ManagerId is required
+            if (model.ManagerId == 0)
+            {
+                ModelState.AddModelError("ManagerId", "Manager is required. Every employee must have a manager to review their OKRs.");
+            }
+
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser
@@ -122,6 +131,23 @@ namespace OKRPerformanceManagement.Web.Controllers
                 var result = await _userManager.CreateAsync(user, model.Password);
                 if (result.Succeeded)
                 {
+                    // Verify manager exists
+                    var managerExists = await _context.Employees.AnyAsync(e => e.Id == model.ManagerId && e.IsActive);
+                    if (!managerExists)
+                    {
+                        ModelState.AddModelError("ManagerId", "Selected manager does not exist or is inactive.");
+                        // Repopulate managers dropdown
+                        var availableManagers = await _context.Employees
+                            .Where(e => (e.Role == "Manager" || e.Role == "HR" || e.Role == "Admin") && e.IsActive)
+                            .OrderBy(e => e.Role)
+                            .ThenBy(e => e.FirstName)
+                            .ThenBy(e => e.LastName)
+                            .Select(e => new { e.Id, Name = $"{e.FirstName} {e.LastName} ({e.Role})" })
+                            .ToListAsync();
+                        ViewBag.Managers = availableManagers;
+                        return View(model);
+                    }
+
                     // Create employee record
                     var employee = new Employee
                     {
@@ -131,7 +157,7 @@ namespace OKRPerformanceManagement.Web.Controllers
                         Role = model.Role,
                         Position = model.Position,
                         UserId = user.Id,
-                        ManagerId = model.ManagerId == 0 ? null : model.ManagerId,
+                        ManagerId = model.ManagerId, // Now required
                         LineOfBusiness = "Digital Industries - CSI3",
                         FinancialYear = "FY 2025",
                         IsActive = true,

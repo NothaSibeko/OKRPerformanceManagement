@@ -98,15 +98,16 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label asp-for="ManagerId" class="form-label">Manager</label>
-                                    <select asp-for="ManagerId" class="form-control">
-                                        <option value="">Select Manager (Optional)</option>
+                                    <label asp-for="ManagerId" class="form-label">Manager *</label>
+                                    <select asp-for="ManagerId" class="form-control" required>
+                                        <option value="">Select Manager (Required)</option>
                                         @foreach (var manager in ViewBag.Managers)
                                         {
-                                            <option value="@manager.Id">@manager.FirstName @manager.LastName</option>
+                                            <option value="@manager.Id">@manager.FirstName @manager.LastName (@manager.Role)</option>
                                         }
                                     </select>
                                     <span asp-validation-for="ManagerId" class="text-danger"></span>
+                                    <small class="form-text text-muted">Every employee must have a manager to review their OKRs.</small>
                                 </div>
                             </div>
                         </div>

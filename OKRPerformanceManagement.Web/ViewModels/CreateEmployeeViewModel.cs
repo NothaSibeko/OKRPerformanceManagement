@@ -27,7 +27,8 @@ namespace OKRPerformanceManagement.Web.ViewModels
         [Required]
         public string Position { get; set; } = string.Empty;
 
-        public int? ManagerId { get; set; }
+        [Required(ErrorMessage = "Manager is required. Every employee must have a manager to review their OKRs.")]
+        public int ManagerId { get; set; }
 
         public int? RoleId { get; set; }
     }
