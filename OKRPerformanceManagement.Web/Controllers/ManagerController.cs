@@ -541,6 +541,16 @@ namespace OKRPerformanceManagement.Web.Controllers
             }
             else if (action == "finalize")
             {
+                // Check if manager has rated all key results
+                var allKeyResults = review.Objectives.SelectMany(o => o.KeyResults).ToList();
+                var unratedKeyResults = allKeyResults.Where(kr => !kr.ManagerRating.HasValue).ToList();
+
+                if (unratedKeyResults.Any())
+                {
+                    TempData["ErrorMessage"] = $"Cannot finalize review. Please rate all {unratedKeyResults.Count} key result(s) before finalizing.";
+                    return RedirectToAction("ManagerReview", new { id = id });
+                }
+
                 review.Status = "Completed";
                 review.FinalizedDate = DateTime.Now;
                 TempData["SuccessMessage"] = "Review finalized successfully. You can view it in your completed reviews.";

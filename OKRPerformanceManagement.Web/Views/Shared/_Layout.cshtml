@@ -24,6 +24,15 @@
                             <li class="nav-item">
                                 <a class="nav-link text-light" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                             </li>
+                            @if (ViewBag.UserRole == "HR")
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link text-light" asp-area="" asp-controller="HR" asp-action="Index">HR Dashboard</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-light" asp-area="" asp-controller="HR" asp-action="MyPerformanceHistory">My Performance Reviews</a>
+                                </li>
+                            }
                             @if (ViewBag.UserRole == "Manager")
                             {
                                 <li class="nav-item">
@@ -42,7 +51,7 @@
                                     <a class="nav-link text-light" asp-area="" asp-controller="Admin" asp-action="MyPerformanceHistory">My Performance Reviews</a>
                                 </li>
                             }
-                            else
+                            else if (ViewBag.UserRole != "HR")
                             {
                                 <li class="nav-item">
                                     <a class="nav-link text-light" asp-area="" asp-controller="Employee" asp-action="MyPerformanceHistory">My Performance Reviews</a>

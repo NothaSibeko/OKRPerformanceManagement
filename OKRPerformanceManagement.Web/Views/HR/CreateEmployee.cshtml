@@ -169,7 +169,58 @@
     </div>
 </div>
 
+<!-- Create Confirmation Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" role="dialog" aria-labelledby="createModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white border-0">
+                <h5 class="modal-title d-flex align-items-center" id="createModalLabel">
+                    <i class="fas fa-user-plus me-2"></i> Confirm Employee Creation
+                </h5>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success bg-opacity-10 rounded-circle" style="width: 80px; height: 80px;">
+                        <i class="fas fa-user-plus fa-2x text-success"></i>
+                    </div>
+                </div>
+                <h6 class="mb-3 text-dark">
+                    Are you sure you want to create a new employee account?
+                </h6>
+                <div class="alert alert-info border-0 bg-light">
+                    <i class="fas fa-info-circle text-info me-2"></i>
+                    <strong>Create Information:</strong> This will create a new employee account in the system with the provided details.
+                </div>
+            </div>
+            <div class="modal-footer border-0 justify-content-center pb-4">
+                <button type="button" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success px-4" id="confirmCreateBtn">
+                    <i class="fas fa-check me-1"></i> Yes, Create
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        $(document).ready(function() {
+            // Override form submission to show modal first
+            $('form').on('submit', function(e) {
+                e.preventDefault();
+                var modal = new bootstrap.Modal(document.getElementById('createModal'));
+                modal.show();
+            });
+
+            $('#confirmCreateBtn').click(function() {
+                // Submit the form
+                $('form').off('submit').submit();
+            });
+        });
+    </script>
 }
 

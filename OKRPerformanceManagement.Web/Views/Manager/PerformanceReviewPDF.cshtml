@@ -309,9 +309,12 @@
         <button onclick="window.print()" style="background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
             Print PDF
         </button>
-        <button onclick="window.close()" style="background-color: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">
+        <button onclick="if(window.opener){window.close();}else{window.history.back();}" style="background-color: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px;">
             Close
         </button>
+        <a href="@Url.Action("ReviewDetails", "Manager", new { id = Model.Id })" style="background-color: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-left: 10px; text-decoration: none; display: inline-block;">
+            Back to Review
+        </a>
     </div>
 </body>
 </html>

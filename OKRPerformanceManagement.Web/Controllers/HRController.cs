@@ -344,10 +344,10 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             foreach (var employee in selectedEmployees)
             {
-                // Check if employee already has an active review
+                // Check if employee already has an active review - NO OVERRIDING ALLOWED
                 var existingReview = await _context.PerformanceReviews
                     .FirstOrDefaultAsync(pr => pr.EmployeeId == employee.Id && 
-                        (pr.Status == "Draft" || pr.Status == "Employee_Review" || pr.Status == "Manager_Review"));
+                        (pr.Status == "Draft" || pr.Status == "Employee_Review" || pr.Status == "Manager_Review" || pr.Status == "Discussion"));
 
                 if (existingReview != null)
                 {
@@ -360,6 +360,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
                 // Use employee's manager if they have one, otherwise use HR as manager
                 var managerId = employee.ManagerId ?? currentHR.Id;
+                var manager = await _context.Employees.FindAsync(managerId);
 
                 var performanceReview = new PerformanceReview
                 {
@@ -442,6 +443,21 @@ namespace OKRPerformanceManagement.Web.Controllers
                         relatedEntityType: "PerformanceReview"
                     );
                 }
+
+                // Send notification to manager (if manager exists and is different from HR)
+                if (manager != null && manager.UserId != null && manager.Id != currentHR.Id)
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        userId: manager.UserId,
+                        senderId: currentUserId,
+                        title: "New OKR Assigned to Your Team Member",
+                        message: $"HR has assigned a new OKR to {employee.FirstName} {employee.LastName} for the period {model.ReviewPeriodStart:MMM dd, yyyy} - {model.ReviewPeriodEnd:MMM dd, yyyy}. Please review it once the employee completes their self-assessment.",
+                        type: "OKR_Assigned_Manager",
+                        actionUrl: $"/Manager/PendingReviews",
+                        relatedEntityId: performanceReview.Id,
+                        relatedEntityType: "PerformanceReview"
+                    );
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -452,11 +468,11 @@ namespace OKRPerformanceManagement.Web.Controllers
             }
             else if (createdReviews.Any())
             {
-                TempData["SuccessMessage"] = $"OKRs successfully assigned to {createdReviews.Count} employee(s)!";
+                TempData["SuccessMessage"] = $"OKRs successfully assigned to {createdReviews.Count} employee(s)! Notifications have been sent to employees and their managers.";
             }
             else
             {
-                TempData["ErrorMessage"] = "No OKRs were assigned. All selected employees already have active reviews.";
+                TempData["ErrorMessage"] = "No OKRs were assigned. All selected employees already have active reviews. Please wait until their current reviews are completed.";
             }
 
             return RedirectToAction("Index");
@@ -495,6 +511,44 @@ namespace OKRPerformanceManagement.Web.Controllers
             }
 
             return View(review);
+        }
+
+        // My Performance History (HR sees all reviews)
+        [HttpGet]
+        public async Task<IActionResult> MyPerformanceHistory()
+        {
+            // HR sees all reviews in the organization
+            var allCompletedReviews = await _context.PerformanceReviews
+                .Where(pr => pr.Status == "Completed" || pr.Status == "Signed")
+                .Include(pr => pr.Employee)
+                .Include(pr => pr.Manager)
+                .Include(pr => pr.OKRTemplate)
+                .OrderByDescending(pr => pr.FinalizedDate ?? pr.CreatedDate)
+                .ToListAsync();
+
+            // Get all employees for statistics
+            var allEmployees = await _context.Employees
+                .Where(e => e.IsActive)
+                .ToListAsync();
+
+            // Calculate performance statistics
+            var performanceStats = new Dictionary<string, object>
+            {
+                ["TotalEmployees"] = allEmployees.Count,
+                ["TotalReviews"] = allCompletedReviews.Count,
+                ["AverageRating"] = allCompletedReviews.Any() ? allCompletedReviews.Average(r => r.OverallRating ?? 0) : 0,
+                ["TopPerformers"] = allCompletedReviews
+                    .Where(r => r.OverallRating.HasValue)
+                    .OrderByDescending(r => r.OverallRating)
+                    .Take(5)
+                    .ToList()
+            };
+
+            ViewBag.AllCompletedReviews = allCompletedReviews;
+            ViewBag.PerformanceStats = performanceStats;
+            ViewBag.UserRole = "HR";
+
+            return View();
         }
     }
 }

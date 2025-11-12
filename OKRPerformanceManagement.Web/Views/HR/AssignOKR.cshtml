@@ -22,17 +22,69 @@
     <!-- Success/Error Messages -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @TempData["SuccessMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle fa-2x me-3"></i>
+                <div class="flex-grow-1">
+                    <h5 class="alert-heading mb-1"><i class="fas fa-check me-2"></i>Success!</h5>
+                    <p class="mb-0">@TempData["SuccessMessage"]</p>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
     @if (TempData["ErrorMessage"] != null)
     {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @TempData["ErrorMessage"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
+        var errorMessage = TempData["ErrorMessage"].ToString();
+        var isActiveReviewError = errorMessage.Contains("already have active reviews");
+        
+        @if (isActiveReviewError)
+        {
+            <div class="alert alert-warning border-0 shadow-lg fade show" role="alert" style="background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%); border-left: 5px solid #ffc107 !important;">
+                <div class="d-flex align-items-start">
+                    <div class="flex-shrink-0">
+                        <div class="rounded-circle bg-warning bg-opacity-25 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <h4 class="alert-heading mb-2 text-dark">
+                            <i class="fas fa-info-circle me-2 text-warning"></i>Active Reviews Detected
+                        </h4>
+                        <p class="mb-2 text-dark fw-semibold">@errorMessage</p>
+                        <hr class="my-3" style="border-color: rgba(0,0,0,0.1);">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-lightbulb me-2 text-warning"></i>
+                            <p class="mb-0 text-dark small">
+                                <strong>What to do:</strong> Wait for the current reviews to be completed (Status: Draft, Employee Review, Manager Review, or Discussion) before assigning new OKRs.
+                            </p>
+                        </div>
+                        <div class="mt-3">
+                            <a href="@Url.Action("ViewAllReviews")" class="btn btn-sm btn-warning me-2">
+                                <i class="fas fa-list me-1"></i> View All Reviews
+                            </a>
+                            <a href="@Url.Action("Index")" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Back to Dashboard
+                            </a>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                    <div class="flex-grow-1">
+                        <h5 class="alert-heading mb-1"><i class="fas fa-times-circle me-2"></i>Error</h5>
+                        <p class="mb-0">@errorMessage</p>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
     }
 
     <div class="row">
