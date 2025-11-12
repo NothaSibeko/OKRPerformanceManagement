@@ -70,71 +70,10 @@
                         <h6 class="m-0 font-weight-bold text-primary">Objectives and Key Results</h6>
                     </div>
                     <div class="card-body">
-                        @if (review?.Objectives != null && review.Objectives.Any())
-                        {
-                            @foreach (var objective in review.Objectives)
-                            {
-                                <div class="mb-4">
-                                    <h5 class="text-primary">@objective.Name</h5>
-                                    <p class="text-muted">@objective.Description</p>
-                                    
-                                    @if (objective.KeyResults != null && objective.KeyResults.Any())
-                                    {
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Key Result</th>
-                                                        <th>Target</th>
-                                                        <th>Employee Rating</th>
-                                                        <th>Employee Comments</th>
-                                                        <th>Manager Rating</th>
-                                                        <th>Manager Comments</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach (var keyResult in objective.KeyResults)
-                                                    {
-                                                        <tr>
-                                                            <td>@keyResult.Name</td>
-                                                            <td>@keyResult.Target</td>
-                                                            <td>
-                                                                @if (keyResult.EmployeeRating.HasValue)
-                                                                {
-                                                                    <span class="badge bg-info">@keyResult.EmployeeRating/5</span>
-                                                                }
-                                                                else
-                                                                {
-                                                                    <span class="text-muted">Not rated</span>
-                                                                }
-                                                            </td>
-                                                            <td>@keyResult.EmployeeComments</td>
-                                                            <td>
-                                                                <select name="managerRatings[@keyResult.Id]" class="form-select form-select-sm">
-                                                                    <option value="">Select Rating</option>
-                                                                    <option value="1" selected="@(keyResult.ManagerRating == 1)">1 - Needs Improvement</option>
-                                                                    <option value="2" selected="@(keyResult.ManagerRating == 2)">2 - Below Expectations</option>
-                                                                    <option value="3" selected="@(keyResult.ManagerRating == 3)">3 - Meets Expectations</option>
-                                                                    <option value="4" selected="@(keyResult.ManagerRating == 4)">4 - Exceeds Expectations</option>
-                                                                    <option value="5" selected="@(keyResult.ManagerRating == 5)">5 - Outstanding</option>
-                                                                </select>
-                                                            </td>
-                                                            <td>
-                                                                <textarea name="managerComments[@keyResult.Id]" class="form-control form-control-sm" rows="2" placeholder="Manager comments...">@keyResult.ManagerComments</textarea>
-                                                            </td>
-                                                        </tr>
-                                                    }
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    }
-                                </div>
-                            }
+                        @{
+                            ViewBag.IsManagerEdit = true;
                         }
-                        else
-                        {
-                            <p class="text-muted">No objectives found for this review.</p>
-                        }
+                        @await Html.PartialAsync("_OKRComprehensiveTableEditable", review)
                     </div>
                 </div>
             </div>
@@ -218,3 +157,38 @@
         </div>
     </form>
 </div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Update calculations when rating changes
+            $(document).on('change', '.employee-rating, .manager-rating', function() {
+                var rating = parseInt($(this).val()) || 0;
+                var weight = parseFloat($(this).data('weight')) || 0;
+                var krId = $(this).data('kr-id');
+                var isEmployee = $(this).hasClass('employee-rating');
+                
+                if (rating > 0) {
+                    var percentValue = (rating / 5.0) * 100;
+                    var calc = (percentValue / 100.0) * weight;
+                    
+                    if (isEmployee) {
+                        $('.employee-percent[data-kr-id="' + krId + '"]').html(percentValue.toFixed(2) + '%');
+                        $('.employee-calc[data-kr-id="' + krId + '"]').html(calc.toFixed(2) + '%');
+                    } else {
+                        $('.manager-percent[data-kr-id="' + krId + '"]').html(percentValue.toFixed(2) + '%');
+                        $('.manager-calc[data-kr-id="' + krId + '"]').html(calc.toFixed(2) + '%');
+                    }
+                } else {
+                    if (isEmployee) {
+                        $('.employee-percent[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                        $('.employee-calc[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                    } else {
+                        $('.manager-percent[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                        $('.manager-calc[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                    }
+                }
+            });
+        });
+    </script>
+}

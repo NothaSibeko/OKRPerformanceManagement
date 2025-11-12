@@ -81,107 +81,10 @@
                             <h6 class="m-0 font-weight-bold text-primary">Objectives and Key Results</h6>
                         </div>
                         <div class="card-body">
-                            @if (Model.Objectives != null && Model.Objectives.Any())
-                            {
-                                var objectivesList = Model.Objectives.ToList();
-                                for (int i = 0; i < objectivesList.Count; i++)
-                                {
-                                    var objective = objectivesList[i];
-                                    <div class="card mb-4">
-                                        <div class="card-header">
-                                            <div class="row align-items-center">
-                                                <div class="col-md-8">
-                                                    <h6 class="mb-0">@objective.Name</h6>
-                                                    @if (!string.IsNullOrEmpty(objective.Description))
-                                                    {
-                                                        <small class="text-muted">@objective.Description</small>
-                                                    }
-                                                </div>
-                                                <div class="col-md-4 text-right">
-                                                    <span class="badge badge-primary">Weight: @objective.Weight%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="card-body">
-                                            @if (objective.KeyResults != null && objective.KeyResults.Any())
-                                            {
-                                                var keyResultsList = objective.KeyResults.ToList();
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Key Result</th>
-                                                                <th>Target</th>
-                                                                <th>Employee Comments</th>
-                                                                <th>Employee Rating</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            @for (int j = 0; j < keyResultsList.Count; j++)
-                                                            {
-                                                                var kr = keyResultsList[j];
-                                                                <tr>
-                                                                    <td>
-                                                                        <strong>@kr.Name</strong>
-                                                                        @if (!string.IsNullOrEmpty(kr.Objectives))
-                                                                        {
-                                                                            <br>
-                                                                            <small class="text-muted">@kr.Objectives</small>
-                                                                        }
-                                                                    </td>
-                                                                    <td>
-                                                                        @if (!string.IsNullOrEmpty(kr.Target))
-                                                                        {
-                                                                            <span>@kr.Target</span>
-                                                                        }
-                                                                        else
-                                                                        {
-                                                                            <span class="text-muted">Not set</span>
-                                                                        }
-                                                                    </td>
-                                                                    <td>
-                                                                        <input type="hidden" name="KeyResults[@j].Id" value="@kr.Id" />
-                                                                        <textarea name="KeyResults[@j].EmployeeComments" class="form-control form-control-sm" rows="2" placeholder="Add your comments...">@kr.EmployeeComments</textarea>
-                                                                    </td>
-                                                                    <td>
-                                                                        <select name="KeyResults[@j].EmployeeRating" class="form-control form-control-sm">
-                                                                            <option value="">Not Rated</option>
-                                                                            @{
-                                                                                var rating1Selected = kr.EmployeeRating == 1 ? "selected" : "";
-                                                                                var rating2Selected = kr.EmployeeRating == 2 ? "selected" : "";
-                                                                                var rating3Selected = kr.EmployeeRating == 3 ? "selected" : "";
-                                                                                var rating4Selected = kr.EmployeeRating == 4 ? "selected" : "";
-                                                                                var rating5Selected = kr.EmployeeRating == 5 ? "selected" : "";
-                                                                            }
-                                                                            <option value="1" selected="@rating1Selected">1 - Needs Improvement</option>
-                                                                            <option value="2" selected="@rating2Selected">2 - Below Expectations</option>
-                                                                            <option value="3" selected="@rating3Selected">3 - Meets Expectations</option>
-                                                                            <option value="4" selected="@rating4Selected">4 - Exceeds Expectations</option>
-                                                                            <option value="5" selected="@rating5Selected">5 - Outstanding</option>
-                                                                        </select>
-                                                                    </td>
-                                                                </tr>
-                                                            }
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <p class="text-muted">No key results defined for this objective.</p>
-                                            }
-                                        </div>
-                                    </div>
-                                }
+                            @{
+                                ViewBag.IsEmployeeEdit = true;
                             }
-                            else
-                            {
-                                <div class="text-center py-4">
-                                    <i class="fas fa-exclamation-circle fa-2x text-gray-300 mb-3"></i>
-                                    <h5 class="text-gray-600">No Objectives Found</h5>
-                                    <p class="text-muted">This OKR doesn't have any objectives defined yet.</p>
-                                </div>
-                            }
+                            @await Html.PartialAsync("_OKRComprehensiveTableEditable", Model)
                         </div>
                     </div>
                 </div>
@@ -252,7 +155,36 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
-            // Add any client-side validation or enhancements here
+            // Update calculations when rating changes
+            $(document).on('change', '.employee-rating, .manager-rating', function() {
+                var rating = parseInt($(this).val()) || 0;
+                var weight = parseFloat($(this).data('weight')) || 0;
+                var krId = $(this).data('kr-id');
+                var isEmployee = $(this).hasClass('employee-rating');
+                
+                if (rating > 0) {
+                    var percentValue = (rating / 5.0) * 100;
+                    var calc = (percentValue / 100.0) * weight;
+                    
+                    if (isEmployee) {
+                        $('.employee-percent[data-kr-id="' + krId + '"]').html(percentValue.toFixed(2) + '%');
+                        $('.employee-calc[data-kr-id="' + krId + '"]').html(calc.toFixed(2) + '%');
+                    } else {
+                        $('.manager-percent[data-kr-id="' + krId + '"]').html(percentValue.toFixed(2) + '%');
+                        $('.manager-calc[data-kr-id="' + krId + '"]').html(calc.toFixed(2) + '%');
+                    }
+                } else {
+                    if (isEmployee) {
+                        $('.employee-percent[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                        $('.employee-calc[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                    } else {
+                        $('.manager-percent[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                        $('.manager-calc[data-kr-id="' + krId + '"]').html('<span class="text-muted">-</span>');
+                    }
+                }
+            });
+
+            // Form submission validation
             $('form').on('submit', function(e) {
                 var action = $('button[type="submit"]:focus').val();
                 if (action === 'submit') {

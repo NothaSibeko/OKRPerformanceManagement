@@ -234,7 +234,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("ReviewDetails", new { id = performanceReview.Id });
+            return RedirectToAction("ReviewDetails", "Manager", new { id = performanceReview.Id });
         }
 
         [HttpGet]
@@ -270,7 +270,7 @@ namespace OKRPerformanceManagement.Web.Controllers
 
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("ReviewDetails", new { id });
+            return RedirectToAction("ReviewDetails", "Manager", new { id });
         }
 
         [HttpGet]
@@ -294,7 +294,7 @@ namespace OKRPerformanceManagement.Web.Controllers
             if (review.Status != "Manager_Review")
             {
                 TempData["ErrorMessage"] = "Discussion can only be scheduled after manager review is completed.";
-                return RedirectToAction("ReviewDetails", new { id });
+                return RedirectToAction("ReviewDetails", "Manager", new { id });
             }
 
             ViewBag.Review = review;
@@ -362,7 +362,7 @@ namespace OKRPerformanceManagement.Web.Controllers
             }
 
             TempData["SuccessMessage"] = $"Discussion session scheduled successfully for {scheduledDateTime:MMMM dd, yyyy} at {scheduledDateTime:hh:mm tt}. The employee has been notified.";
-            return RedirectToAction("ReviewDetails", new { id });
+            return RedirectToAction("ReviewDetails", "Manager", new { id });
         }
 
 
@@ -537,7 +537,7 @@ namespace OKRPerformanceManagement.Web.Controllers
             if (action == "schedule_discussion")
             {
                 // Redirect to schedule discussion page instead of scheduling directly
-                return RedirectToAction("ScheduleDiscussion", new { id = id });
+                return RedirectToAction("ScheduleDiscussion", "Manager", new { id = id });
             }
             else if (action == "finalize")
             {
@@ -580,10 +580,15 @@ namespace OKRPerformanceManagement.Web.Controllers
             }
 
             // Redirect based on action taken
-            if (action == "schedule_discussion" || action == "finalize")
+            if (action == "schedule_discussion")
             {
-                // If scheduled for discussion or finalized, redirect to review details
-                return RedirectToAction("ReviewDetails", new { id = id });
+                // Redirect to schedule discussion page
+                return RedirectToAction("ScheduleDiscussion", "Manager", new { id = id });
+            }
+            else if (action == "finalize")
+            {
+                // If finalized, redirect to manager's review details
+                return RedirectToAction("ReviewDetails", "Manager", new { id = id });
             }
             else
             {
