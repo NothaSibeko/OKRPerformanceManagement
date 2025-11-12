@@ -1,6 +1,6 @@
-@model OKRPerformanceManagement.Web.ViewModels.CreateEmployeeViewModel
+@model OKRPerformanceManagement.Web.ViewModels.EditEmployeeViewModel
 @{
-    ViewData["Title"] = "Create Employee";
+    ViewData["Title"] = "Edit Employee - HR";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -8,9 +8,9 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0 text-gray-800">Create New Employee</h1>
+                <h1 class="h3 mb-0 text-gray-800">Edit Employee</h1>
                 <a href="@Url.Action("Index")" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    <i class="fas fa-arrow-left"></i> Back to HR Dashboard
                 </a>
             </div>
         </div>
@@ -23,7 +23,10 @@
                     <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
                 </div>
                 <div class="card-body">
-                    <form asp-action="CreateEmployee" method="post">
+                    <form asp-action="EditEmployee" method="post">
+                        @Html.AntiForgeryToken()
+                        <input asp-for="Id" type="hidden" />
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -51,16 +54,6 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label asp-for="Password" class="form-label">Password *</label>
-                                    <input asp-for="Password" type="password" class="form-control" placeholder="Enter password" />
-                                    <span asp-validation-for="Password" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
                                     <label asp-for="Role" class="form-label">Role *</label>
                                     <select asp-for="Role" class="form-control">
                                         <option value="">Select Role</option>
@@ -75,6 +68,9 @@
                                     <span asp-validation-for="Role" class="text-danger"></span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label asp-for="Position" class="form-label">Position *</label>
@@ -82,9 +78,6 @@
                                     <span asp-validation-for="Position" class="text-danger"></span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label asp-for="RoleId" class="form-label">Employee Role</label>
@@ -98,6 +91,9 @@
                                     <span asp-validation-for="RoleId" class="text-danger"></span>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label asp-for="ManagerId" class="form-label">Manager</label>
@@ -111,11 +107,22 @@
                                     <span asp-validation-for="ManagerId" class="text-danger"></span>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <div class="form-check mt-4">
+                                        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+                                        <label asp-for="IsActive" class="form-check-label">
+                                            Active Employee
+                                        </label>
+                                    </div>
+                                    <span asp-validation-for="IsActive" class="text-danger"></span>
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group mt-4">
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Create Employee
+                                <i class="fas fa-save"></i> Update Employee
                             </button>
                             <a href="@Url.Action("Index")" class="btn btn-secondary">
                                 <i class="fas fa-times"></i> Cancel
@@ -133,6 +140,18 @@
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
+                        <h6 class="font-weight-bold">HR</h6>
+                        <p class="text-muted small">Full access to all features</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Admin</h6>
+                        <p class="text-muted small">Administrative access</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Manager</h6>
+                        <p class="text-muted small">Manager</p>
+                    </div>
+                    <div class="mb-3">
                         <h6 class="font-weight-bold">Administration</h6>
                         <p class="text-muted small">Administration or Junior Support Engineer</p>
                     </div>
@@ -143,10 +162,6 @@
                     <div class="mb-3">
                         <h6 class="font-weight-bold">Senior and Technical Team Leads</h6>
                         <p class="text-muted small">Senior and Technical Team Leads</p>
-                    </div>
-                    <div class="mb-3">
-                        <h6 class="font-weight-bold">Manager</h6>
-                        <p class="text-muted small">Manager</p>
                     </div>
                     <div class="mb-3">
                         <h6 class="font-weight-bold">Consultant</h6>
@@ -161,3 +176,4 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+

@@ -1,0 +1,223 @@
+@model OKRPerformanceManagement.Web.ViewModels.CreateTemplateReviewViewModel
+
+@{
+    ViewData["Title"] = "Assign OKR to Anyone - HR";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-user-shield me-2 text-primary"></i>Assign OKR to Anyone
+                </h1>
+                <a href="@Url.Action("Index")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to HR Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-user-shield me-2"></i>HR - Assign OKR to Any Employee
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>HR Access:</strong> As HR, you can assign OKRs to <strong>ANY employee</strong> in the organization, regardless of reporting structure.
+                    </div>
+                    <form asp-action="AssignOKR" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="OKRTemplateId" class="form-label">Select OKR Template</label>
+                                    <select asp-for="OKRTemplateId" class="form-select" required>
+                                        <option value="">-- Select Template --</option>
+                                        @foreach (var template in Model.AvailableTemplates)
+                                        {
+                                            <option value="@template.Id">@template.Name (@template.Role)</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="OKRTemplateId" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ReviewPeriodStart" class="form-label">Review Period Start</label>
+                                    <input asp-for="ReviewPeriodStart" class="form-control" type="date" required />
+                                    <span asp-validation-for="ReviewPeriodStart" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="ReviewPeriodEnd" class="form-label">Review Period End</label>
+                                    <input asp-for="ReviewPeriodEnd" class="form-control" type="date" required />
+                                    <span asp-validation-for="ReviewPeriodEnd" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label asp-for="Description" class="form-label">Review Description (Optional)</label>
+                                    <input asp-for="Description" class="form-control" placeholder="Brief description of this review period" />
+                                    <span asp-validation-for="Description" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-users me-2"></i>Select Employees (Any Employee in Organization)
+                            </label>
+                            <div class="mb-2">
+                                <button type="button" class="btn btn-sm btn-outline-primary" id="selectAll">
+                                    <i class="fas fa-check-square"></i> Select All
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAll">
+                                    <i class="fas fa-square"></i> Deselect All
+                                </button>
+                            </div>
+                            <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                                @if (Model.AvailableEmployees.Any())
+                                {
+                                    @foreach (var employee in Model.AvailableEmployees)
+                                    {
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   name="SelectedEmployeeIds" 
+                                                   value="@employee.Id" 
+                                                   id="employee_@employee.Id" />
+                                            <label class="form-check-label" for="employee_@employee.Id">
+                                                <strong>@employee.FirstName @employee.LastName</strong>
+                                                <small class="text-muted">(@employee.Role - @employee.Position)</small>
+                                                @if (employee.Manager != null)
+                                                {
+                                                    <br><small class="text-muted">Manager: @employee.Manager.FirstName @employee.Manager.LastName</small>
+                                                }
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted">No employees available.</p>
+                                }
+                            </div>
+                            <small class="form-text text-muted">Select any employee(s) in the organization to assign OKRs. HR can assign to anyone regardless of reporting structure.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle"></i> Assign OKRs
+                            </button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary btn-lg">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">HR Capabilities</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Assign to Anyone:</strong> Assign OKRs to any employee, regardless of manager
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Full Access:</strong> View all reviews and employee data
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>User Management:</strong> Create and manage all users
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <strong>Organization Overview:</strong> Complete visibility into all performance data
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Available Templates</h6>
+                </div>
+                <div class="card-body">
+                    @if (Model.AvailableTemplates.Any())
+                    {
+                        @foreach (var template in Model.AvailableTemplates)
+                        {
+                            <div class="mb-2">
+                                <strong>@template.Name</strong>
+                                <br>
+                                <small class="text-muted">@template.Description</small>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No templates available.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Add validation
+            $('form').on('submit', function(e) {
+                var selectedEmployees = $('input[name="SelectedEmployeeIds"]:checked').length;
+                if (selectedEmployees === 0) {
+                    e.preventDefault();
+                    alert('Please select at least one employee.');
+                    return false;
+                }
+            });
+
+            // Select all functionality
+            $('#selectAll').on('click', function() {
+                $('input[name="SelectedEmployeeIds"]').prop('checked', true);
+            });
+
+            // Deselect all functionality
+            $('#deselectAll').on('click', function() {
+                $('input[name="SelectedEmployeeIds"]').prop('checked', false);
+            });
+        });
+    </script>
+}
+

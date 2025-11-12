@@ -131,7 +131,11 @@ namespace OKRPerformanceManagement.Web.Controllers
                         Role = model.Role,
                         Position = model.Position,
                         UserId = user.Id,
-                        ManagerId = model.ManagerId == 0 ? null : model.ManagerId
+                        ManagerId = model.ManagerId == 0 ? null : model.ManagerId,
+                        LineOfBusiness = "Digital Industries - CSI3",
+                        FinancialYear = "FY 2025",
+                        IsActive = true,
+                        CreatedDate = DateTime.Now
                     };
 
                     _context.Employees.Add(employee);

@@ -1,0 +1,219 @@
+@model OKRPerformanceManagement.Models.PerformanceReview
+@{
+    ViewData["Title"] = "Review Details - HR";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Performance Review Details</h1>
+                <div>
+                    <a href="@Url.Action("ViewAllReviews")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to All Reviews
+                    </a>
+                    <a href="@Url.Action("Index")" class="btn btn-info">
+                        <i class="fas fa-home"></i> HR Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mb-3">
+                                @Model.Employee.FirstName.Substring(0, 1)@Model.Employee.LastName.Substring(0, 1)
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <h4>@Model.Employee.FirstName @Model.Employee.LastName</h4>
+                            <p class="text-muted mb-1">@Model.Employee.Position</p>
+                            <p class="text-muted mb-1">@Model.Employee.Role</p>
+                            <p class="text-muted mb-1">@Model.Employee.Email</p>
+                            <p class="text-muted">Review Period: @Model.ReviewPeriodStart.ToString("MMM dd, yyyy") - @Model.ReviewPeriodEnd.ToString("MMM dd, yyyy")</p>
+                            @if (Model.ScheduledDiscussionDate.HasValue)
+                            {
+                                <p class="text-info mb-0">
+                                    <i class="fas fa-calendar-check me-2"></i>
+                                    <strong>Scheduled Discussion:</strong> @Model.ScheduledDiscussionDate.Value.ToString("MMMM dd, yyyy 'at' hh:mm tt")
+                                </p>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Self Assessment -->
+    @if (!string.IsNullOrEmpty(Model.EmployeeSelfAssessment))
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Employee Self Assessment</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>@Model.EmployeeSelfAssessment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Manager Assessment -->
+    @if (!string.IsNullOrEmpty(Model.ManagerAssessment))
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Manager Assessment</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>@Model.ManagerAssessment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Objectives and Key Results -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Objectives and Key Results</h6>
+                </div>
+                <div class="card-body">
+                    @foreach (var objective in Model.Objectives.OrderBy(o => o.SortOrder))
+                    {
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold text-primary">@objective.Name</h5>
+                            <p class="text-muted">@objective.Description</p>
+                            <p><strong>Weight:</strong> @objective.Weight%</p>
+
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>Key Result</th>
+                                            <th>Target</th>
+                                            <th>Employee Rating</th>
+                                            <th>Employee Comments</th>
+                                            <th>Manager Rating</th>
+                                            <th>Manager Comments</th>
+                                            <th>Final Rating</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var keyResult in objective.KeyResults.OrderBy(kr => kr.SortOrder))
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@keyResult.Name</strong><br>
+                                                    <small class="text-muted">@keyResult.Objectives</small>
+                                                </td>
+                                                <td>@keyResult.Target</td>
+                                                <td>
+                                                    @if (keyResult.EmployeeRating.HasValue)
+                                                    {
+                                                        <span class="badge bg-info">@keyResult.EmployeeRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not rated</span>
+                                                    }
+                                                </td>
+                                                <td>@keyResult.EmployeeComments</td>
+                                                <td>
+                                                    @if (keyResult.ManagerRating.HasValue)
+                                                    {
+                                                        <span class="badge bg-warning">@keyResult.ManagerRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not rated</span>
+                                                    }
+                                                </td>
+                                                <td>@keyResult.ManagerComments</td>
+                                                <td>
+                                                    @if (keyResult.FinalRating.HasValue)
+                                                    {
+                                                        <span class="badge bg-success">@keyResult.FinalRating</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">Not finalized</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Status -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Review Status</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Status:</strong> 
+                        <span class="badge 
+                            @(Model.Status == "Draft" ? "bg-secondary" : 
+                              Model.Status == "Employee_Review" ? "bg-info" : 
+                              Model.Status == "Manager_Review" ? "bg-warning" : 
+                              Model.Status == "Discussion" ? "bg-primary" : 
+                              Model.Status == "Completed" ? "bg-success" : "bg-secondary")">
+                            @Model.Status
+                        </span>
+                    </p>
+                    <p><strong>Created:</strong> @Model.CreatedDate.ToString("MMM dd, yyyy")</p>
+                    @if (Model.SubmittedDate.HasValue)
+                    {
+                        <p><strong>Submitted:</strong> @Model.SubmittedDate.Value.ToString("MMM dd, yyyy")</p>
+                    }
+                    @if (Model.FinalizedDate.HasValue)
+                    {
+                        <p><strong>Finalized:</strong> @Model.FinalizedDate.Value.ToString("MMM dd, yyyy")</p>
+                    }
+                    @if (Model.OverallRating.HasValue)
+                    {
+                        <p><strong>Overall Rating:</strong> 
+                            <span class="badge bg-success">@Model.OverallRating.Value.ToString("F1")</span>
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-lg {
+        width: 80px;
+        height: 80px;
+        font-size: 24px;
+    }
+</style>
+

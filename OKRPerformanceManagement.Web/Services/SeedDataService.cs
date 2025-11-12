@@ -49,7 +49,7 @@ namespace OKRPerformanceManagement.Web.Services
 
         private async Task SeedIdentityRolesAsync()
         {
-            string[] roles = { "Administration", "Support_Systems Engineer", "Snr and Technical Team Leads", "Manager", "Consultant", "Admin" };
+            string[] roles = { "Administration", "Support_Systems Engineer", "Snr and Technical Team Leads", "Manager", "Consultant", "Admin", "HR" };
 
             foreach (string role in roles)
             {
@@ -262,6 +262,44 @@ namespace OKRPerformanceManagement.Web.Services
             await _context.SaveChangesAsync();
         }
     }
-}
+
+            // Create default HR user if it doesn't exist
+            var hrUser = await _userManager.FindByEmailAsync("hr@okr.com");
+            if (hrUser == null)
+            {
+                hrUser = new ApplicationUser
+                {
+                    UserName = "hr@okr.com",
+                    Email = "hr@okr.com",
+                    EmailConfirmed = true,
+                    FirstName = "HR",
+                    LastName = "Super User"
+                };
+
+                var result = await _userManager.CreateAsync(hrUser, "HR123!");
+                if (result.Succeeded)
+                {
+                    await _userManager.AddToRoleAsync(hrUser, "HR");
+                    
+                    // Create employee record
+                    var employee = new Employee
+                    {
+                        UserId = hrUser.Id,
+                        FirstName = "HR",
+                        LastName = "Super User",
+                        Email = "hr@okr.com",
+                        Role = "HR",
+                        Position = "HR Manager",
+                        LineOfBusiness = "Digital Industries - CSI3",
+                        FinancialYear = "FY 2025",
+                        IsActive = true,
+                        CreatedDate = DateTime.Now
+                    };
+                    
+                    _context.Employees.Add(employee);
+                    await _context.SaveChangesAsync();
+                }
+            }
+        }
     }
 }

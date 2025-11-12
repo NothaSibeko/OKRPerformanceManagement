@@ -27,8 +27,13 @@ namespace OKRPerformanceManagement.Web.Controllers
             
             if (currentEmployee != null)
             {
-                // Check if user is Admin (has Admin role in Identity)
-                if (User.IsInRole("Admin"))
+                // Check if user is HR (highest priority - super user)
+                if (User.IsInRole("HR"))
+                {
+                    userRole = "HR";
+                }
+                // Check if user is Admin
+                else if (User.IsInRole("Admin"))
                 {
                     userRole = "Admin";
                 }
@@ -46,7 +51,28 @@ namespace OKRPerformanceManagement.Web.Controllers
             ViewBag.CurrentEmployee = currentEmployee;
 
             // Get role-specific statistics
-            if (userRole == "Admin")
+            if (userRole == "HR")
+            {
+                // HR sees everything - all system data
+                ViewBag.EmployeeCount = await _context.Employees.CountAsync();
+                ViewBag.ReviewCount = await _context.PerformanceReviews.CountAsync();
+                ViewBag.ObjectiveCount = await _context.Objectives.CountAsync();
+                ViewBag.KeyResultCount = await _context.KeyResults.CountAsync();
+                ViewBag.ManagerCount = await _context.Employees.CountAsync(e => e.Role == "Manager");
+                ViewBag.ActiveReviews = await _context.PerformanceReviews.CountAsync(pr => pr.Status != "Completed");
+                ViewBag.CompletedReviews = await _context.PerformanceReviews.CountAsync(pr => pr.Status == "Completed");
+                
+                // Get upcoming scheduled discussions for HR
+                ViewBag.UpcomingDiscussions = await _context.PerformanceReviews
+                    .Where(pr => pr.ScheduledDiscussionDate.HasValue 
+                        && pr.ScheduledDiscussionDate.Value >= DateTime.Now
+                        && pr.Status == "Discussion")
+                    .Include(pr => pr.Employee)
+                    .Include(pr => pr.Manager)
+                    .OrderBy(pr => pr.ScheduledDiscussionDate)
+                    .ToListAsync();
+            }
+            else if (userRole == "Admin")
             {
                 // Admin sees all system data
                 ViewBag.EmployeeCount = await _context.Employees.CountAsync();

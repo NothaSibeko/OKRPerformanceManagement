@@ -1,0 +1,336 @@
+@{
+    ViewData["Title"] = "HR Dashboard - Super User";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-user-shield me-2 text-primary"></i>HR Dashboard
+                </h1>
+                <div>
+                    <a href="@Url.Action("AssignOKR")" class="btn btn-success">
+                        <i class="fas fa-plus-circle"></i> Assign OKR to Anyone
+                    </a>
+                    <a href="@Url.Action("CreateEmployee")" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Add User
+                    </a>
+                    <a href="@Url.Action("ViewAllReviews")" class="btn btn-info">
+                        <i class="fas fa-list"></i> View All Reviews
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Upcoming Scheduled Discussions -->
+    @if (ViewBag.UpcomingDiscussions != null && ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.UpcomingDiscussions).Any())
+    {
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow border-left-warning">
+                    <div class="card-header py-3 bg-warning text-white">
+                        <h6 class="m-0 font-weight-bold">
+                            <i class="fas fa-calendar-check me-2"></i>Upcoming Discussion Sessions (All Employees)
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach (var discussion in ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.UpcomingDiscussions).Take(6))
+                            {
+                                <div class="col-md-4 mb-3">
+                                    <div class="card border-left-info h-100">
+                                        <div class="card-body">
+                                            <h6 class="font-weight-bold text-primary mb-2">
+                                                <i class="fas fa-user me-2"></i>@discussion.Employee.FirstName @discussion.Employee.LastName
+                                            </h6>
+                                            <p class="mb-1 small">
+                                                <i class="fas fa-user-tie me-2 text-muted"></i>Manager: @discussion.Manager?.FirstName @discussion.Manager?.LastName
+                                            </p>
+                                            <p class="mb-1">
+                                                <i class="fas fa-calendar-alt me-2 text-info"></i>
+                                                <strong>Date:</strong> @discussion.ScheduledDiscussionDate.Value.ToString("MMM dd, yyyy")
+                                            </p>
+                                            <p class="mb-1">
+                                                <i class="fas fa-clock me-2 text-info"></i>
+                                                <strong>Time:</strong> @discussion.ScheduledDiscussionDate.Value.ToString("hh:mm tt")
+                                            </p>
+                                            <a href="@Url.Action("ReviewDetails", new { id = discussion.Id })" class="btn btn-sm btn-info mt-2">
+                                                <i class="fas fa-eye"></i> View Review
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Employees
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TotalEmployees</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Reviews
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.ActiveReviews</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Completed Reviews
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.CompletedReviews</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Reviews
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ViewBag.TotalReviews</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Reviews -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Pending Reviews (Requiring Action)</h6>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.AllPendingReviews != null && ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.AllPendingReviews).Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Manager</th>
+                                        <th>Status</th>
+                                        <th>Review Period</th>
+                                        <th>Created Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var review in ((List<OKRPerformanceManagement.Models.PerformanceReview>)ViewBag.AllPendingReviews).Take(10))
+                                    {
+                                        <tr>
+                                            <td>@review.Employee.FirstName @review.Employee.LastName</td>
+                                            <td>@(review.Manager != null ? $"{review.Manager.FirstName} {review.Manager.LastName}" : "N/A")</td>
+                                            <td>
+                                                <span class="badge bg-warning">@review.Status</span>
+                                            </td>
+                                            <td>@review.ReviewPeriodStart.ToString("MMM dd") - @review.ReviewPeriodEnd.ToString("MMM dd, yyyy")</td>
+                                            <td>@review.CreatedDate.ToString("MMM dd, yyyy")</td>
+                                            <td>
+                                                <a href="@Url.Action("ReviewDetails", new { id = review.Id })" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-eye"></i> View
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No pending reviews at this time.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- All Employees -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">All Employees</h6>
+                    <a href="@Url.Action("CreateEmployee")" class="btn btn-sm btn-primary">
+                        <i class="fas fa-user-plus"></i> Add New Employee
+                    </a>
+                </div>
+                <div class="card-body">
+                    @if (ViewBag.AllEmployees != null && ((List<OKRPerformanceManagement.Models.Employee>)ViewBag.AllEmployees).Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="employeesTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Position</th>
+                                        <th>Role</th>
+                                        <th>Manager</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var employee in ((List<OKRPerformanceManagement.Models.Employee>)ViewBag.AllEmployees))
+                                    {
+                                        <tr>
+                                            <td>@employee.FirstName @employee.LastName</td>
+                                            <td>@employee.Email</td>
+                                            <td>@employee.Position</td>
+                                            <td>
+                                                <span class="badge bg-info text-white">@employee.Role</span>
+                                            </td>
+                                            <td>@(employee.Manager != null ? $"{employee.Manager.FirstName} {employee.Manager.LastName}" : "N/A")</td>
+                                            <td>
+                                                <span class="badge @(employee.IsActive ? "bg-success" : "bg-secondary")">
+                                                    @(employee.IsActive ? "Active" : "Inactive")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="@Url.Action("EditEmployee", new { id = employee.Id })" class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                                <a href="@Url.Action("AssignOKR")" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-plus"></i> Assign OKR
+                                                </a>
+                                                @if (employee.IsActive)
+                                                {
+                                                    <form method="post" action="@Url.Action("DeleteEmployee", new { id = employee.Id })" style="display: inline;" onsubmit="return confirm('Are you sure you want to deactivate @employee.FirstName @employee.LastName? This will set their status to inactive.');">
+                                                        @Html.AntiForgeryToken()
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i> Delete
+                                                        </button>
+                                                    </form>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted">No employees found.</p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            if ($.fn.DataTable && $('#employeesTable').length) {
+                $('#employeesTable').DataTable({
+                    "pageLength": 25,
+                    "order": [[ 0, "asc" ]],
+                    "responsive": true
+                });
+            }
+        });
+    </script>
+}
+
+<style>
+    .border-left-primary {
+        border-left: 4px solid #007bff !important;
+    }
+    
+    .border-left-success {
+        border-left: 4px solid #28a745 !important;
+    }
+    
+    .border-left-warning {
+        border-left: 4px solid #ffc107 !important;
+    }
+    
+    .border-left-info {
+        border-left: 4px solid #17a2b8 !important;
+    }
+</style>
+

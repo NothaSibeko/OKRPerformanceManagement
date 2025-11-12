@@ -110,7 +110,48 @@
     </div>
 }
 
-@if (userRole == "Admin")
+@if (userRole == "HR")
+{
+    <div class="row mt-5">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Total Employees</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.EmployeeCount</h4>
+                    <p class="card-text">All employees in the system</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Active Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.ActiveReviews</h4>
+                    <p class="card-text">Reviews in progress</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Completed Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.CompletedReviews</h4>
+                    <p class="card-text">Reviews completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Total Reviews</div>
+                <div class="card-body">
+                    <h4 class="card-title">@ViewBag.ReviewCount</h4>
+                    <p class="card-text">All performance reviews</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else if (userRole == "Admin")
 {
     <div class="row mt-5">
         <div class="col-md-3">
@@ -243,7 +284,22 @@ else
             </div>
             <div class="card-body">
                 <div class="row">
-                    @if (userRole == "Manager")
+                    @if (userRole == "HR")
+                    {
+                        <div class="col-md-3">
+                            <a href="@Url.Action("Index", "HR")" class="btn btn-primary btn-lg btn-block mb-2">HR Dashboard</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("AssignOKR", "HR")" class="btn btn-success btn-lg btn-block mb-2">Assign OKR to Anyone</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("CreateEmployee", "HR")" class="btn btn-info btn-lg btn-block mb-2">Add User</a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="@Url.Action("ViewAllReviews", "HR")" class="btn btn-warning btn-lg btn-block mb-2">View All Reviews</a>
+                        </div>
+                    }
+                    else if (userRole == "Manager")
                     {
                         <div class="col-md-3">
                             <a href="@Url.Action("Index", "Manager")" class="btn btn-primary btn-lg btn-block mb-2">Manager Dashboard</a>

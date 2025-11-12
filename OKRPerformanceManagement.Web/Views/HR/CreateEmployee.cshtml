@@ -1,6 +1,6 @@
 @model OKRPerformanceManagement.Web.ViewModels.CreateEmployeeViewModel
 @{
-    ViewData["Title"] = "Create Employee";
+    ViewData["Title"] = "Create Employee - HR";
     Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
@@ -8,9 +8,11 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0 text-gray-800">Create New Employee</h1>
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-user-shield me-2 text-primary"></i>Create New Employee
+                </h1>
                 <a href="@Url.Action("Index")" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    <i class="fas fa-arrow-left"></i> Back to HR Dashboard
                 </a>
             </div>
         </div>
@@ -19,11 +21,12 @@
     <div class="row">
         <div class="col-lg-8">
             <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Employee Information</h6>
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">Employee Information</h6>
                 </div>
                 <div class="card-body">
                     <form asp-action="CreateEmployee" method="post">
+                        @Html.AntiForgeryToken()
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -128,10 +131,22 @@
 
         <div class="col-lg-4">
             <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">Role Information</h6>
+                <div class="card-header py-3 bg-primary text-white">
+                    <h6 class="m-0 font-weight-bold">Available Roles</h6>
                 </div>
                 <div class="card-body">
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold text-primary">HR</h6>
+                        <p class="text-muted small">Full access to all features - can assign OKRs to anyone, manage all users, view everything</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold text-primary">Admin</h6>
+                        <p class="text-muted small">Administrative access to manage employees, templates, and view all data</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Manager</h6>
+                        <p class="text-muted small">Manage team members and their performance reviews</p>
+                    </div>
                     <div class="mb-3">
                         <h6 class="font-weight-bold">Administration</h6>
                         <p class="text-muted small">Administration or Junior Support Engineer</p>
@@ -143,10 +158,6 @@
                     <div class="mb-3">
                         <h6 class="font-weight-bold">Senior and Technical Team Leads</h6>
                         <p class="text-muted small">Senior and Technical Team Leads</p>
-                    </div>
-                    <div class="mb-3">
-                        <h6 class="font-weight-bold">Manager</h6>
-                        <p class="text-muted small">Manager</p>
                     </div>
                     <div class="mb-3">
                         <h6 class="font-weight-bold">Consultant</h6>
@@ -161,3 +172,4 @@
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 }
+
